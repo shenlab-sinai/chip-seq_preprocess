@@ -31,7 +31,7 @@ Install above softwares and make sure they are in $PATH.
 
 ### Installation
 
-Put the scripts in a place in $PATH or add ./bin to $PATH.
+Put the scripts in ./bin to a place in $PATH or add ./bin to $PATH.
 
 ### Usage
 
