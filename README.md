@@ -44,3 +44,9 @@ For the organization of projects, I generally follow this paper: [A Quick Guide 
 For the configuration yaml file, __project_dir: "~/projects/test_ChIP-seq"__ and __data_dir: "data"__ mean the data folder is "~/projects/test_ChIP-seq/data", and the results will be put in the same folder.
 
 The position of pipeline.py and config.yaml doesn't matter at all. But I prefer to put them under project/script/preprocess folder.
+
+** Important: **
+> To make ngs.plot part work, please name the fastq files in this way:
+> Say condition A, B, each with 2 replicates, and one DNA input per condition.
+> Name the files as A_rep1.fastq, A_rep2.fastq, A_input.fastq, B_rep1.fastq, B_rep2.fastq, and B_input.fastq.
+> The key point is to make the same condition samples with common letters and input samples contain "input" or "Input" strings.
