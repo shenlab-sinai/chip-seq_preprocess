@@ -1,0 +1,11 @@
+cores: 8
+project_name: "test_ChIP-seq"
+project_dir: "~/projects/test_ChIP-seq"
+bowtie_index: "~/data/bowtie_index/Genome"
+data_dir: "data"
+input_files: "*.fastq"
+bam_sort_buff: "5G"
+fastqc_threads: 4
+IGV_genome: reference_genome
+ngsplot_genome: reference_genome
+ngsplot_fraglen: 150

@@ -1,0 +1,9 @@
+#! /bin/bash
+NWD=$1
+GENOME=$2
+SCRIPT_DIR=`pwd`
+cd ${NWD}
+for i in *.bam; do
+    igvtools count ${i} ${i/bam/tdf} ${GENOME}
+done
+cd ${SCRIPT_DIR}
