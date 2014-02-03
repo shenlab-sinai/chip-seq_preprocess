@@ -54,3 +54,7 @@ The position of pipeline.py and config.yaml doesn't matter at all. But I prefer 
 > Name the files as A_rep1.fastq, A_rep2.fastq, A_input.fastq, B_rep1.fastq, B_rep2.fastq, and B_input.fastq.
 
 > The key point is to make the same condition samples with common letters and input samples contain "input" or "Input" strings.
+
+### Notes
+
+The parameters of bowtie were just adopted from this [paper](http://www.nature.com/nprot/journal/v7/n1/full/nprot.2011.420.html).
