@@ -4,12 +4,12 @@
 
 Here is the pipeline I used for ChIP-seq preprocessing, including:
 
-* align the fastq data to reference genome by bowtie.
-* run FastQC to chech the sequencing quality.
-* remove all duplications of the aligned data.
+* align the fastq data to reference genome by bowtie or bowtie2.
+* run FastQC to check the sequencing quality.
+* remove all reads duplications of the aligned data.
 * generate TDF files for browsing in IGV.
 * run PhantomPeak to check the quality of ChIP.
-* run ngs.plot to examine the enrichment of ChIP-seq data at TSS, TES, and genebody.
+* run ngs.plot to investigate the enrichment of ChIP-seq data at TSS, TES, and genebody.
 
 The pipeline work flow is:
 
@@ -60,3 +60,7 @@ The position of pipeline.py and config.yaml doesn't matter at all. But I prefer 
 The parameters of bowtie were just adopted from this [paper](http://www.nature.com/nprot/journal/v7/n1/full/nprot.2011.420.html).
 
 In Bowtie2, default parameters are used.
+
+### ToDos
+
++ A parser for log files to summary the QC results.
