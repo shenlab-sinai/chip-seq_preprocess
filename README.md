@@ -58,3 +58,5 @@ The position of pipeline.py and config.yaml doesn't matter at all. But I prefer 
 ### Notes
 
 The parameters of bowtie were just adopted from this [paper](http://www.nature.com/nprot/journal/v7/n1/full/nprot.2011.420.html).
+
+In Bowtie2, default parameters are used.
