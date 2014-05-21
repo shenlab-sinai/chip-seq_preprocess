@@ -39,7 +39,15 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     Arguments:
     - `FqFileName`: file to be processed
     """
-    cmds = ['fastq2bam_by_bowtie.sh']
+    if "aligner" in config:
+        if config["aligner"] == "bowtie":
+            cmds = ['fastq2bam_by_bowtie.sh']
+        elif config["aligner"] == "bowtie2":
+            cmds = ['fastq2bam_by_bowtie2.sh']
+        else:
+            raise KeyError
+    else:
+        cmds = ['fastq2bam_by_bowtie.sh']
     cmds.append(FqFileName)
     cmds.append(config['bowtie_index'])
     target = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]))

@@ -1,11 +1,15 @@
 cores: 8
 project_name: "test_ChIP-seq"
 project_dir: "~/projects/test_ChIP-seq"
-bowtie_index: "~/data/bowtie_index/Genome"
+## Bowtie1 index path
+# bowtie_index: "~/data/bowtie_index/Genome"
+## Bowtie2 index name, as "hg19" or "mm9"
+bowtie_index: "Genome"
 data_dir: "data"
 input_files: "*.fastq"
+aligner: "bowtie2"
 bam_sort_buff: "5G"
 fastqc_threads: 4
-IGV_genome: reference_genome
-ngsplot_genome: reference_genome
+IGV_genome: "reference_genome"
+ngsplot_genome: "reference_genome"
 ngsplot_fraglen: 150

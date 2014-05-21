@@ -41,7 +41,7 @@ python pipline.py config.yaml
 
 For the organization of projects, I generally follow this paper: [A Quick Guide to Organizing Computational Biology Projects](http://www.ploscompbiol.org/article/info%3Adoi%2F10.1371%2Fjournal.pcbi.1000424). Here because it is preprocessing, and real analysis will be peak calling, chromatin segmentation, and differential enrichment detection, so I just put the results of the preprocess in the data folder.
 
-For the configuration yaml file, __project_dir: `~/projects/test_ChIP-seq`__ and __data_dir: "data"__ mean the data folder is `~/projects/test_ChIP-seq/data`, and the results will be put in the same folder. Fastq files should be under `~/projects/test_ChIP-seq/data/fastq` folder.
+For the configuration yaml file, __project_dir: `~/projects/test_ChIP-seq`__ and __data_dir: "data"__ mean the data folder is `~/projects/test_ChIP-seq/data`, and the results will be put in the same folder. Fastq files should be under `~/projects/test_ChIP-seq/data/fastq` folder. `aligner` now could be `bowtie` or `bowtie2`, if not assigned, then default aligner is `bowtie`. For `bowtie2`, the system variable `$BOWTIE2_INDEXES` should be set before running.
 
 The position of pipeline.py and config.yaml doesn't matter at all. But I prefer to put them under project/script/preprocess folder.
 
