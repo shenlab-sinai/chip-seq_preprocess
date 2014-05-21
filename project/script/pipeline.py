@@ -14,6 +14,17 @@ def expandOsPath(path):
     """
     return os.path.expanduser(os.path.expandvars(path))
 
+def genFilesWithPattern(pathList, Pattern):
+    """
+    To generate rmdup Bam files list on the fly.
+    Arguments:
+    - `pathList`: the path of the files
+    - `Pattern`: pattern like config["input_files"]
+    """
+    pathList.append(Pattern)
+    Files = expandOsPath(os.path.join(*pathList))
+    return Files
+
 config_name = sys.argv[1]
 config_f = open(config_name, "r")
 config = yaml.load(config_f)
@@ -44,8 +55,7 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     stdout, stderr = p.communicate()
     return stdout
 
-inputfiles = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "*.bam"))
-BamFiles = [x for x in glob.glob(inputfiles)]
+BamFiles = genFilesWithPattern([config["project_dir"], config["data_dir"]], "*.bam")
 
 @follows(alignFastqByBowtie, mkdir(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))))
 @transform(BamFiles, suffix(".bam"), ".bam.fastqc.log", config)
@@ -56,7 +66,6 @@ def runFastqc(BamFileName, fastqcZip, config):
     - `BamFileName`: bam file
     - `config`: config
     """
-    BamFileName = string.replace(BamFileName, ".converthead.log", "")
     cmds = ['fastqc']
     cmds.append("-o")
     cmds.append(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC")))
@@ -97,18 +106,7 @@ def rmdupBam(BamFileName, rmdupFile, config):
     stdout, stderr = p.communicate()
     return stdout
 
-def genFilesWithPattern(pathList, Pattern):
-    """
-    To generate rmdup Bam files list on the fly.
-    Arguments:
-    - `pathList`: the path of the files
-    - `Pattern`: pattern like config["input_files"]
-    """
-    pathList.append(Pattern)
-    Files = expandOsPath(os.path.join(*pathList))
-    return Files
-
-rmdupBamFiles = genFilesWithPattern([rmdup_path], config["input_files"])
+rmdupBamFiles = genFilesWithPattern([rmdup_path], "*.bam")
 
 @follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
 @transform(rmdupBamFiles, suffix(".bam"), ".bam.tdf.log", config)
@@ -173,6 +171,11 @@ def runNgsplotAll(BamFileNames, Log, config):
     stdout, stderr = p.communicate()
     return stdout
 
+## Run to FastQC step
 # pipeline_run([runFastqc], multiprocess=config["cores"])
-# pipeline_run([runNgsplotAllExp], multiprocess=config["cores"])
+
+## Run the whole pipeline
+# pipeline_run([runNgsplotAll], multiprocess=config["cores"])
+
+## Plot the pipeline flowchart
 pipeline_printout_graph("all_flowchart.png", "png", [runNgsplotAll], pipeline_name="Preprocessing of ChIP-seq")
