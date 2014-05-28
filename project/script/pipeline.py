@@ -16,7 +16,7 @@ def expandOsPath(path):
 
 def genFilesWithPattern(pathList, Pattern):
     """
-    To generate rmdup Bam files list on the fly.
+    To generate files list on the fly based on wildcards pattern.
     Arguments:
     - `pathList`: the path of the files
     - `Pattern`: pattern like config["input_files"]
@@ -42,14 +42,19 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     if "aligner" in config:
         if config["aligner"] == "bowtie":
             cmds = ['fastq2bam_by_bowtie.sh']
+            cmds.append(FqFileName)
+            cmds.append(expandOsPath(config['bowtie_index']))
         elif config["aligner"] == "bowtie2":
             cmds = ['fastq2bam_by_bowtie2.sh']
+            cmds.append(FqFileName)
+            cmds.append(config['bowtie_index'])
         else:
             raise KeyError
     else:
         cmds = ['fastq2bam_by_bowtie.sh']
-    cmds.append(FqFileName)
-    cmds.append(config['bowtie_index'])
+        cmds.append(FqFileName)
+        cmds.append(expandOsPath(config['bowtie_index']))
+
     target = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]))
     cmds.append(target)
     cores = int(int(config['cores'])/len(FqFiles))

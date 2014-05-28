@@ -4,6 +4,7 @@ project_dir: "~/projects/test_ChIP-seq"
 ## Bowtie1 index path
 # bowtie_index: "~/data/bowtie_index/Genome"
 ## Bowtie2 index name, as "hg19" or "mm9"
+## $BOWTIE2_INDEXES should be added in the environment variables
 bowtie_index: "Genome"
 data_dir: "data"
 input_files: "*.fastq"
