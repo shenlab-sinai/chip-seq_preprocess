@@ -13,7 +13,7 @@ Here is the pipeline I used for ChIP-seq preprocessing, including:
 
 The pipeline work flow is:
 
-![work flow](https://github.com/ny-shao/chip-seq_preprocess/blob/master/all_flowchart.png?raw=true)
+![work flow](https://raw.githubusercontent.com/ny-shao/chip-seq_preprocess/master/all_flowchart.png)
 
 ### Requirement
 
