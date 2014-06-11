@@ -1,14 +1,20 @@
 cores: 8
 project_name: "test_ChIP-seq"
 project_dir: "~/projects/test_ChIP-seq"
-## Bowtie1 index path
+
+## Aligner: bowtie or bowtie2
+aligner: "bowtie2"
+
+## If use bowtie, then bowtie1 index path to be assigned here.
+## "Genome" replaced by genome name as "hg19" or "mm9".
 # bowtie_index: "~/data/bowtie_index/Genome"
-## Bowtie2 index name, as "hg19" or "mm9"
+
+## If use bowtie2, then "Genome" should be replace by
+## bowtie2 index name, as "hg19" or "mm9"
 ## $BOWTIE2_INDEXES should be added in the environment variables
 bowtie_index: "Genome"
 data_dir: "data"
 input_files: "*.fastq"
-aligner: "bowtie2"
 bam_sort_buff: "5G"
 fastqc_threads: 4
 IGV_genome: "reference_genome"
