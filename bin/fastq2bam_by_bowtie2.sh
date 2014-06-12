@@ -18,8 +18,15 @@ else
     CORES=4
 fi
 
-bowtie2 -p ${CORES} -x ${BOWTIE_INDEX} \
-    ${FILE} > ${SAM}
+case "$EXT" in
+	fq | fastq | FQ | FASTQ ) bowtie2 -p ${CORES} -x ${BOWTIE_INDEX} \
+	        ${FILE} > ${SAM}
+	    ;;
+	gz | GZ ) zcat ${FILE} | bowtie2 -p ${CORES} -x ${BOWTIE_INDEX} \
+	        - > ${SAM}
+	    ;;
+esac
+
 samtools view -Sb ${SAM} > ${SAM/sam/nonSorted.bam}
 samtools sort -m 5G ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
 samtools index ${SAM/sam/bam}

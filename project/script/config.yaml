@@ -6,15 +6,22 @@ project_dir: "~/projects/test_ChIP-seq"
 aligner: "bowtie2"
 
 ## If use bowtie, then bowtie1 index path to be assigned here.
-## "Genome" replaced by genome name as "hg19" or "mm9".
+## "Genome" replaced by genome name as "hg19" or "mm9", and
+## uncomment next line.
 # bowtie_index: "~/data/bowtie_index/Genome"
 
 ## If use bowtie2, then "Genome" should be replace by
 ## bowtie2 index name, as "hg19" or "mm9"
 ## $BOWTIE2_INDEXES should be added in the environment variables
 bowtie_index: "Genome"
+
+## the folder under project folder, containing fastq folder.
 data_dir: "data"
+
+## match pattern for input files. Now it could be:
+## *.fastq, *.fq, *.gz
 input_files: "*.fastq"
+
 bam_sort_buff: "5G"
 fastqc_threads: 4
 IGV_genome: "reference_genome"

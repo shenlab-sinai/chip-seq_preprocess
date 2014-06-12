@@ -31,8 +31,10 @@ config = yaml.load(config_f)
 config_f.close()
 inputfiles = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "fastq", config["input_files"]))
 FqFiles = [x for x in glob.glob(inputfiles)]
+fq_name, fq_ext = os.path.splitext(config["input_files"])
+fq_ext_suffix = ".alignment.log"
 
-@transform(FqFiles, suffix(".fastq"), ".fastq.alignment.log", config)
+@transform(FqFiles, suffix(fq_ext), fq_ext_suffix, config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
     To align '.fastq' to genome.
@@ -188,7 +190,7 @@ def runNgsplotAll(BamFileNames, Log, config):
 # pipeline_run([runFastqc], multiprocess=config["cores"])
 
 ## Run the whole pipeline
-# pipeline_run([runNgsplotAll], multiprocess=config["cores"])
+pipeline_run([runNgsplotAll], multiprocess=config["cores"])
 
 ## Plot the pipeline flowchart
-pipeline_printout_graph("all_flowchart.png", "png", [runNgsplotAll], pipeline_name="Preprocessing of ChIP-seq")
+# pipeline_printout_graph("all_flowchart.png", "png", [runNgsplotAll], pipeline_name="Preprocessing of ChIP-seq")
