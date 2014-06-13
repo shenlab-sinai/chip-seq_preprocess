@@ -63,6 +63,7 @@ The position of pipeline.py, results_parser.py, and config.yaml doesn't matter a
 
 > If use want to only run to some specific step, just modify the function name in `pipeline_run` in pipeline.py.
 
+
 ** Warning:**
 
 > `Bowtie2` allows multiple hits reads, and breaks the assumption of `phantomPeak`: `It is EXTREMELY important to filter out multi-mapping reads from the BAM/tagAlign files. Large number of multimapping reads can severly affect the phantom peak coefficient and peak calling results.` So be careful to interpret `NSC` and `RSC` in `Bowtie2` alignment results.
