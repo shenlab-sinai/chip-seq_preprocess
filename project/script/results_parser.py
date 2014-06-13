@@ -31,6 +31,8 @@ def parse_bowtie1_log(s):
                         re.VERBOSE)
     unique_mapped_pattern = re.compile("""\#\s+reads\s+with\s+at\s+least\s+one\s+reported\s+alignment:\s+(?P<unique_mapped_reads>\S+)\s+\(\S+\)""", # unique_mapped_reads
                         re.VERBOSE)
+    multiple_mapped_pattern = re.compile("""\#\s+reads\s+with\s+alignments\s+suppressed\s+due\s+to\s+-m:\s+(?P<multiple_mapped_reads>\d+)\s+\(\S+\)""",  #multiple_mapped_reads
+                        re.VERBOSE)
     for line in s:
         match = total_pattern.match(line)
         if match:
@@ -38,8 +40,13 @@ def parse_bowtie1_log(s):
         match = unique_mapped_pattern.match(line)
         if match:
             unique_mapped_reads = match.group("unique_mapped_reads")
-    res = namedtuple('res', ['total_reads', 'unique_mapped_reads'])
-    r = res(total_reads=total_reads, unique_mapped_reads=unique_mapped_reads)
+        match = multiple_mapped_pattern.match(line)
+        if match:
+            multiple_mapped_reads = match.group("multiple_mapped_reads")
+    res = namedtuple('res', ['total_reads', 'unique_mapped_reads', 'suppressed_multiple_mapped_reads'])
+    r = res(total_reads=total_reads, 
+        unique_mapped_reads=unique_mapped_reads, 
+        suppressed_multiple_mapped_reads=multiple_mapped_reads)
     return r
 
 def parse_bowtie2_log(s):
@@ -129,7 +136,7 @@ if config["aligner"] == "bowtie":
 
     ## Summary files used for summarizing.
     input_files = {
-    ".alignment.log":("total_reads", "unique_mapped_reads"), 
+    ".alignment.log":("total_reads", "unique_mapped_reads", "suppressed_multiple_mapped_reads"), 
     ".rmdup.log":("dup_reads"), 
     ".phantomPeak.log":("NSC", "RSC")
     }
@@ -142,7 +149,15 @@ if config["aligner"] == "bowtie":
     }
 
     ## Used to assign the output field in output file.
-    output_header = ["sample", "total_reads", "unique_mapped_reads", "dup_reads", "NSC", "RSC"]
+    output_header = [
+        "sample", 
+        "total_reads", 
+        "unique_mapped_reads", 
+        "suppressed_multiple_mapped_reads", 
+        "dup_reads", 
+        "NSC", 
+        "RSC"]
+
 elif config["aligner"] == "bowtie2":
     ## to be used in debug
     # input_files = {".alignment.log":("total_reads", "unique_mapped_reads", "multiple_mapped_reads")}
@@ -162,7 +177,14 @@ elif config["aligner"] == "bowtie2":
     }
 
     ## Used to assign the output field in output file.
-    output_header = ["sample", "total_reads", "unique_mapped_reads", "multiple_mapped_reads", "dup_reads", "NSC", "RSC"]
+    output_header = [
+        "sample", 
+        "total_reads", 
+        "unique_mapped_reads", 
+        "multiple_mapped_reads", 
+        "dup_reads", 
+        "NSC", 
+        "RSC"]
 
 ## Scan the files to summarize the pipeline.
 for input_type, summary_types in input_files.items():
