@@ -1,4 +1,4 @@
-#! /bin/env Rscript
+#! /usr/bin/env Rscript
 # run_spp_nodups.R
 # =============
 # Author: Anshul Kundaje, Computer Science Dept., MIT
