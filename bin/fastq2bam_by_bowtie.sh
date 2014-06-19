@@ -27,8 +27,6 @@ case "$EXT" in
 	    ;;
 esac
 
-bowtie -p ${CORES} -q -m 1 -v 3 --sam --best --strata ${BOWTIE_INDEX} \
-    ${FILE} > ${SAM}
 samtools view -Sb ${SAM} > ${SAM/sam/nonSorted.bam}
 samtools sort -m 5G ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
 samtools index ${SAM/sam/bam}
