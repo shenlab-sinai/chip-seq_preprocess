@@ -21,7 +21,7 @@ data_dir: "data"
 
 ## match pattern for input files. Now it could be:
 ## *.fastq, *.fq, *.gz
-## for pair end data, use "*R1.fastq.gz" or "*R1.fastq"
+## for pair end data, use "*R1*.fastq.gz" or "*R1*.fastq"
 input_files: "*.fastq"
 
 bam_sort_buff: "5G"

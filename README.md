@@ -53,18 +53,17 @@ The position of pipeline.py, results_parser.py, and config.yaml doesn't matter a
 
 **Important:**
 
-> To make ngs.plot part work, please name the fastq files in this way:
++ To make ngs.plot part work, please name the fastq files in this way:
+```
+Say condition A, B, each with 2 replicates, and one DNA input per condition. Name the files as A_rep1.fastq, A_rep2.fastq, A_input.fastq, B_rep1.fastq, B_rep2.fastq, and B_input.fastq.The key point is to make the same condition samples with common letters and input samples contain "input" or "Input" strings.
+```
++ If use want to only run to some specific step, just modify the function name in `pipeline_run` in pipeline.py.
++ If the data are pair-end, follow this step:
+	+ Modify the `config.yaml` file, change "pair_end" to "yes".
+	+ Modify the `config.yaml` file, change "input_files" to "*R1*.fastq.gz" or "*R1*.fastq".
+	+ Make sure the fastq files named as "*R1*" and "*R2*" pattern.
 
-> Say condition A, B, each with 2 replicates, and one DNA input per condition.
-
-> Name the files as A_rep1.fastq, A_rep2.fastq, A_input.fastq, B_rep1.fastq, B_rep2.fastq, and B_input.fastq.
-
-> The key point is to make the same condition samples with common letters and input samples contain "input" or "Input" strings.
-
-> If use want to only run to some specific step, just modify the function name in `pipeline_run` in pipeline.py.
-
-
-** Warning:**
+**Warning:**
 
 > `Bowtie2` allows multiple hits reads, and breaks the assumption of `phantomPeak`: `It is EXTREMELY important to filter out multi-mapping reads from the BAM/tagAlign files. Large number of multimapping reads can severly affect the phantom peak coefficient and peak calling results.` So be careful to interpret `NSC` and `RSC` in `Bowtie2` alignment results.
 
