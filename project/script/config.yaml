@@ -3,23 +3,25 @@ project_name: "test_ChIP-seq"
 project_dir: "~/projects/test_ChIP-seq"
 
 ## Aligner: bowtie or bowtie2
-aligner: "bowtie2"
+aligner: "bowtie"
+pair_end: "no"
 
 ## If use bowtie, then bowtie1 index path to be assigned here.
 ## "Genome" replaced by genome name as "hg19" or "mm9", and
 ## uncomment next line.
-# bowtie_index: "~/data/bowtie_index/Genome"
+bowtie_index: "~/data/bowtie_index/Genome"
 
 ## If use bowtie2, then "Genome" should be replace by
 ## bowtie2 index name, as "hg19" or "mm9"
 ## $BOWTIE2_INDEXES should be added in the environment variables
-bowtie_index: "Genome"
+# bowtie_index: "Genome"
 
 ## the folder under project folder, containing fastq folder.
 data_dir: "data"
 
 ## match pattern for input files. Now it could be:
 ## *.fastq, *.fq, *.gz
+## for pair end data, use "*R1.fastq.gz" or "*R1.fastq"
 input_files: "*.fastq"
 
 bam_sort_buff: "5G"

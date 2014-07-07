@@ -111,7 +111,10 @@ def rmdupBam(BamFileName, rmdupFile, config):
     - `BamFileName`: bam file
     - `config`: config
     """
-    cmds = ['rmdup.bam.sh']
+    if config["pair_end"]=="no":
+        cmds = ['rmdup.bam.sh']
+    else:
+        cmds = ['rmdup_PE.bam.sh']
     cmds.append(BamFileName)
     cmds.append(rmdup_path)
     if "bam_sort_buff" in config:
