@@ -64,7 +64,7 @@ B_rep2.fastq, and B_input.fastq.The key point is to make the same condition
 + If use want to only run to some specific step, just modify the function name in `pipeline_run` in pipeline.py.
 + If the data are pair-end, follow this step:
 	+ Modify the `config.yaml` file, change "pair_end" to "yes".
-	+ Modify the `config.yaml` file, change "input_files" to "*R1*.fastq.gz" or "*R1*.fastq".
+	+ Modify the `config.yaml` file, change "input_files" to "\*R1\*.fastq.gz" or "\*R1\*.fastq".
 	+ Make sure the fastq files named as "*R1*" and "*R2*" pattern.
 
 **Warning:**
