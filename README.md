@@ -26,6 +26,7 @@ The softwares used in this pipeline are:
 * [IGVTools](http://www.broadinstitute.org/igv/igvtools)
 * [PhantomPeak](http://code.google.com/p/phantompeakqualtools/) __In fact, the script **run_spp_nodups.R** is from PhantomPeak, but PhantomPeak still need to be installed in R.__
 * [ngs.plot](https://code.google.com/p/ngsplot/)
+* If cluster supporting needed, [drmaa_for_python](https://pypi.python.org/pypi/drmaa) is needed. Now only LSF is supported, but it is easy to modify it to fit your demands.
 
 Install above softwares and make sure they are in $PATH.
 
@@ -37,6 +38,12 @@ Put the scripts in ./bin to a place in $PATH or add ./bin to $PATH.
 
 ```bash
 python pipline.py config.yaml
+```
+
+Or on an LSF cluster:
+
+```bash
+nohup python pipline.py config.yaml &
 ```
 
 After the running of the pipeline, then to summarize the result:
@@ -66,6 +73,10 @@ B_rep2.fastq, and B_input.fastq.The key point is to make the same condition
 	+ Modify the `config.yaml` file, change "pair_end" to "yes".
 	+ Modify the `config.yaml` file, change "input_files" to "\*R1\*.fastq.gz" or "\*R1\*.fastq".
 	+ Make sure the fastq files named as "\*R1\*" and "\*R2\*" pattern.
++ if you want to use cluster:
+	+ Edit '~/.bash_profile' to make sure all paths in $PATH.
+	+ Modify `config.yaml` to fit your demands.
+	+ Change `multithread` in last two line of `pipeline.py` to the threads of your need, generally are the number of your fastq files.
 
 **Warning:**
 
@@ -73,7 +84,7 @@ B_rep2.fastq, and B_input.fastq.The key point is to make the same condition
 ```
 It is EXTREMELY important to filter out multi-mapping reads from the BAM/tagAlign
  files. Large number of multimapping reads can severly affect the phantom peak
-  coefficient and peak calling results.
+ coefficient and peak calling results.
 ```
 So be careful to interpret `NSC` and `RSC` in `Bowtie2` alignment results.
 
