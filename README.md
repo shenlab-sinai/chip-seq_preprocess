@@ -46,6 +46,8 @@ Or on an LSF cluster:
 nohup python pipline.py config.yaml &
 ```
 
+If you want to stop at some step before `runNgsplotAll`, you may modify `pipeline_run` in `pipeline.py`, change the function name to the step you want.
+
 After the running of the pipeline, then to summarize the result:
 
 ```bash
