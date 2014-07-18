@@ -14,9 +14,6 @@ EXT="${FILENAME##*.}"
 FILENAME_BASE="${FILENAME%.*}"
 PE=$4
 
-echo "${FILE}"
-echo "${PE}"
-
 SAM=${FQDIR}/${FILENAME_BASE}.sam
 
 if [ -n "$5" ]; then
