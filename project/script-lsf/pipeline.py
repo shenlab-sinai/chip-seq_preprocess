@@ -66,6 +66,7 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     target = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]))
     cmds.append(target)
+    cmds.append(config["pair_end"])
     cores = int(config['cores'])
     if cores == 0:
         cores = 1

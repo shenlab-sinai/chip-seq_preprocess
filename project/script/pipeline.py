@@ -61,6 +61,7 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     target = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]))
     cmds.append(target)
+    cmds.append(config["pair_end"])
     cores = int(int(config['cores'])/len(FqFiles))
     if cores == 0:
         cores = 1
@@ -192,10 +193,10 @@ def runNgsplotAll(BamFileNames, Log, config):
     return stdout
 
 ## Run to FastQC step
-# pipeline_run([runFastqc], multiprocess=config["cores"])
+pipeline_run([alignFastqByBowtie], multiprocess=config["cores"])
 
 ## Run the whole pipeline
-pipeline_run([runNgsplotAll], multiprocess=config["cores"])
+# pipeline_run([runNgsplotAll], multiprocess=config["cores"])
 
 ## Plot the pipeline flowchart
 # pipeline_printout_graph("all_flowchart.png", "png", [runNgsplotAll], pipeline_name="Preprocessing of ChIP-seq")

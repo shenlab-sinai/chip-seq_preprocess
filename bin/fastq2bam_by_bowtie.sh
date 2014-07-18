@@ -3,7 +3,8 @@
 ## $1: fastq file
 ## $2: bowtie index file with path
 ## $3: target folder
-## $4[ option ]: threads to be used in alignment, default is 4
+## $4: if input are pair end data
+## $5[ option ]: threads to be used in alignment, default is 4
 
 FILE=$1
 BOWTIE_INDEX=$2
@@ -11,25 +12,20 @@ FILENAME=$(basename "$FILE")
 FQDIR=$(dirname "$FILE")
 EXT="${FILENAME##*.}"
 FILENAME_BASE="${FILENAME%.*}"
+PE=$4
 
-## test if there is pair end fq file
-FILE2=${FQDIR}/${FILENAME/R1/R2}
-if [ -f ${FILE2} ]; then
-	PE="Y"
-	echo "${FILE2}"
-else
-	PE="N"
-fi
+echo "${FILE}"
+echo "${PE}"
 
 SAM=${FQDIR}/${FILENAME_BASE}.sam
 
-if [ -n "$4" ]; then
-    CORES=$4
+if [ -n "$5" ]; then
+    CORES=$5
 else
     CORES=4
 fi
 
-if [ "$PE" == "N" ]; then
+if [[ "${PE}" == "no" ]]; then
 	case "$EXT" in
 		fq | fastq | FQ | FASTQ ) bowtie -p ${CORES} -q -m 1 -v 3 --sam --best --strata ${BOWTIE_INDEX} \
 		                                ${FILE} > ${SAM}
@@ -39,6 +35,7 @@ if [ "$PE" == "N" ]; then
 		    ;;
 	esac
 else
+	echo "${PE}"
 	case "$EXT" in
 		fq | fastq | FQ | FASTQ ) bowtie -p ${CORES} -q -m 1 -v 3 --sam --best --strata ${BOWTIE_INDEX} \
 		                                -1 ${FILE} -2 ${FILE2} > ${SAM}
