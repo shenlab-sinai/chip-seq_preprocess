@@ -35,8 +35,11 @@ inputfiles = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]
 FqFiles = [x for x in glob.glob(inputfiles)]
 fq_name, fq_ext = os.path.splitext(config["input_files"])
 fq_ext_suffix = ".alignment.log"
+Bam_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"])) + "/"
+FastQC_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))
+rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
 
-@transform(FqFiles, suffix(fq_ext), fq_ext_suffix, config)
+@transform(FqFiles, formatter(fq_ext), os.path.join(Bam_path, "{basename[0]}.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
     To align '.fastq' to genome.
@@ -73,11 +76,9 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     stdout, stderr = p.communicate()
     return stdout
 
-BamFiles = genFilesWithPattern([config["project_dir"], config["data_dir"]], "*.bam")
-
-@follows(alignFastqByBowtie, mkdir(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))))
-@transform(BamFiles, suffix(".bam"), ".bam.fastqc.log", config)
-def runFastqc(BamFileName, fastqcZip, config):
+@follows(alignFastqByBowtie, mkdir(FastQC_path))
+@transform(alignFastqByBowtie, suffix(".bam"), ".bam.fastqc.log", config)
+def runFastqc(BamFileName, fastqcLog, config):
     """
     To run FastQC
     Arguments:
@@ -101,10 +102,8 @@ def runFastqc(BamFileName, fastqcZip, config):
     stdout, stderr = p.communicate()
     return stdout
 
-rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
-
 @follows(runFastqc, mkdir(rmdup_path))
-@transform(BamFiles, suffix(".bam"), ".bam.rmdup.log", config)
+@transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
     To run FastQC
@@ -127,10 +126,8 @@ def rmdupBam(BamFileName, rmdupFile, config):
     stdout, stderr = p.communicate()
     return stdout
 
-rmdupBamFiles = genFilesWithPattern([rmdup_path], "*.bam")
-
 @follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
-@transform(rmdupBamFiles, suffix(".bam"), ".bam.tdf.log", config)
+@transform(rmdupBam, suffix(".bam"), ".bam.tdf.log", config)
 def genTDF(BamFileName, tdfLog, config):
     """
     To generate TDF files for IGV
@@ -153,7 +150,7 @@ def genTDF(BamFileName, tdfLog, config):
     return stdout
 
 @follows(rmdupBam)
-@transform(rmdupBamFiles, suffix(".bam"), ".bam.phantomPeak.log", config)
+@transform(rmdupBam, suffix(".bam"), ".bam.phantomPeak.log", config)
 def runPhantomPeak(BamFileName, Log, config):
     """
     To check data with phantomPeak
@@ -171,7 +168,7 @@ def runPhantomPeak(BamFileName, Log, config):
     return stdout
 
 @follows(runPhantomPeak, genTDF)
-@merge(rmdupBamFiles, expandOsPath(os.path.join(rmdup_path, config["project_name"]+".ngsplot.all.log")), config)
+@merge(rmdupBam, expandOsPath(os.path.join(rmdup_path, config["project_name"]+".ngsplot.all.log")), config)
 def runNgsplotAll(BamFileNames, Log, config):
     """
     To check data with phantomPeak

@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import os
 import sys
 import yaml
@@ -38,10 +40,13 @@ inputfiles = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]
 FqFiles = [x for x in glob.glob(inputfiles)]
 fq_name, fq_ext = os.path.splitext(config["input_files"])
 fq_ext_suffix = ".alignment.log"
+Bam_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"])) + "/"
+FastQC_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))
+rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
 
 scipt_path = os.path.dirname(os.path.realpath(__file__))
 
-@transform(FqFiles, suffix(fq_ext), fq_ext_suffix, config)
+@transform(FqFiles, formatter(fq_ext), os.path.join(Bam_path, "{basename[0]}.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
     To align '.fastq' to genome.
@@ -85,11 +90,9 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     return 0
 
-BamFiles = genFilesWithPattern([config["project_dir"], config["data_dir"]], "*.bam")
-
-@follows(alignFastqByBowtie, mkdir(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))))
-@transform(BamFiles, suffix(".bam"), ".bam.fastqc.log", config)
-def runFastqc(BamFileName, fastqcZip, config):
+@follows(alignFastqByBowtie, mkdir(FastQC_path))
+@transform(alignFastqByBowtie, suffix(".bam"), ".bam.fastqc.log", config)
+def runFastqc(BamFileName, fastqcLog, config):
     """
     To run FastQC
     Arguments:
@@ -121,10 +124,8 @@ def runFastqc(BamFileName, fastqcZip, config):
 
     return 0
 
-rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
-
 @follows(runFastqc, mkdir(rmdup_path))
-@transform(BamFiles, suffix(".bam"), ".bam.rmdup.log", config)
+@transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
     To run FastQC
@@ -155,11 +156,8 @@ def rmdupBam(BamFileName, rmdupFile, config):
 
     return 0
 
-rmdupBamFiles = genFilesWithPattern([rmdup_path], "*.bam")
-
-# @follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
-@follows(mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
-@transform(rmdupBamFiles, suffix(".bam"), ".bam.tdf.log", config)
+@follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
+@transform(rmdupBam, suffix(".bam"), ".bam.tdf.log", config)
 def genTDF(BamFileName, tdfLog, config):
     """
     To generate TDF files for IGV
@@ -190,7 +188,7 @@ def genTDF(BamFileName, tdfLog, config):
     return 0
 
 @follows(genTDF)
-@transform(rmdupBamFiles, suffix(".bam"), ".bam.phantomPeak.log", config)
+@transform(rmdupBam, suffix(".bam"), ".bam.phantomPeak.log", config)
 def runPhantomPeak(BamFileName, Log, config):
     """
     To check data with phantomPeak
@@ -201,7 +199,7 @@ def runPhantomPeak(BamFileName, Log, config):
     cmds = ['runPhantomPeak.sh']
     cmds.append(BamFileName)
     cmds.append(str(config["cores"]))
-    logfile = BamFileName + ".phantomPeak.log"\
+    logfile = BamFileName + ".phantomPeak.log"
 
     cores = config["cores"]
     cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
