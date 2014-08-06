@@ -217,6 +217,6 @@ def runPhantomPeak(BamFileName, Log, config):
 if __name__ == '__main__':
     ## run to step of PhantomPeak
     ## multithread number need to be changed!
-    pipeline_run([runPhantomPeak], multithread=3)
+    pipeline_run([runPhantomPeak], multithread=10)
     
     my_drmaa_session.exit()

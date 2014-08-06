@@ -78,7 +78,7 @@ B_rep2.fastq, and B_input.fastq.The key point is to make the same condition
 + if you want to use cluster:
 	+ Edit '~/.bash_profile' to make sure all paths in $PATH.
 	+ Modify `config.yaml` to fit your demands.
-	+ Change `multithread` in last two line of `pipeline.py` to the threads of your need, generally are the number of your fastq files.
+	+ `multithread` in `pipeline.py` determines the number of concurrent jobs to be submitted to cluster nodes by ruffus. A default value of 10 is used.
 
 **Warning:**
 
