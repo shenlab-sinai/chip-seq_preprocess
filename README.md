@@ -37,13 +37,13 @@ Put the scripts in ./bin to a place in $PATH or add ./bin to $PATH.
 ### Usage
 
 ```bash
-python pipline.py config.yaml
+python pipeline.py config.yaml
 ```
 
 Or on an LSF cluster:
 
 ```bash
-nohup python pipline.py config.yaml &
+nohup python pipeline.py config.yaml &
 ```
 
 If you want to stop at some step before `runNgsplotAll`, you may modify `pipeline_run` in `pipeline.py`, change the function name to the step you want.
