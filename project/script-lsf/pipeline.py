@@ -32,6 +32,27 @@ def genFilesWithPattern(pathList, Pattern):
     Files = expandOsPath(os.path.join(*pathList))
     return Files
 
+def cluster_options(config, task_name, cores, logfile):
+    """
+    Generate a string of cluster options to feed an LSF job.
+    Arguments:
+    - `config`: configuration as associative array from the YAML file.
+    - `task_name`: the specific task name, such as runPhantomPeak.
+    - `cores`: number of cores to use for this task.
+    - `logfile`: log file name.
+    """
+
+    str_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash" % \
+        (config["wall_time"][task_name], cores, logfile, logfile, config["queue"]) 
+    # Name of the partition where you want to run your job. By default, the cluster will assign one for you.
+    if "m" in config:
+        str_options = str_options + " -m %s" % (config["m"])
+    # Allocation account. By default, will use the free account (i.e. scavenger on Minerva).
+    if "alloc" in config:
+        str_options = str_options + " -P %s" % (config["alloc"])
+    return str_options
+
+
 config_name = sys.argv[1]
 config_f = open(config_name, "r")
 config = yaml.load(config_f)
@@ -78,12 +99,9 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     cmds.append(str(cores))
     logfile = FqFileName + ".alignment.log"
 
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["alignFastqByBowtie"], cores, logfile, logfile, config["queue"], config["m"])
-
     run_job(" ".join(cmds),
         job_name = "alignFastqByBowtie_" + os.path.basename(FqFileName),
-        job_other_options = cluster_options,
+        job_other_options = cluster_options(config, "alignFastqByBowtie", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
@@ -102,22 +120,17 @@ def runFastqc(BamFileName, fastqcLog, config):
     cmds = ['fastqc']
     cmds.append("-o")
     cmds.append(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC")))
-    if "fastqc_threads" in config:
-        cmds.append("-t")
-        cmds.append(str(config["fastqc_threads"]))
-    else:
-        cmds.append("-t")
-        cmds.append("2")
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
+    cmds.append("-t")
+    cmds.append(str(cores))
     cmds.append(BamFileName)
     logfile = BamFileName + ".fastqc.log"
 
-    cores = config["fastqc_threads"]
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["runFastqc"], cores, logfile, logfile, config["queue"], config["m"])
-
     run_job(" ".join(cmds),
         job_name = "fastqc_" + os.path.basename(BamFileName),
-        job_other_options = cluster_options,
+        job_other_options = cluster_options(config, "runFastqc", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
@@ -144,12 +157,10 @@ def rmdupBam(BamFileName, rmdupFile, config):
     logfile = BamFileName + ".rmdup.log"
 
     cores = 1
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["rmdupBam"], cores, logfile, logfile, config["queue"], config["m"])
 
     run_job(" ".join(cmds),
         job_name = "rmdup_" + os.path.basename(BamFileName),
-        job_other_options = cluster_options,
+        job_other_options = cluster_options(config, "rmdupBam", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
@@ -175,15 +186,13 @@ def genTDF(BamFileName, tdfLog, config):
     logfile = BamFileName + ".tdf.log"
 
     cores = 1
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["genTDF"], cores, logfile, logfile, config["queue"], config["m"])
 
     run_job(" ".join(cmds),
-    job_name = "genTDF_" + os.path.basename(BamFileName),
-    job_other_options = cluster_options,
-    job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-    job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-    retain_job_scripts = True, drmaa_session=my_drmaa_session)
+        job_name = "genTDF_" + os.path.basename(BamFileName),
+        job_other_options = cluster_options(config, "genTDF", cores, logfile),
+        job_script_directory = os.path.dirname(os.path.realpath(__file__)),
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
+        retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
@@ -201,16 +210,16 @@ def runPhantomPeak(BamFileName, Log, config):
     cmds.append(str(config["cores"]))
     logfile = BamFileName + ".phantomPeak.log"
 
-    cores = config["cores"]
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["runPhantomPeak"], cores, logfile, logfile, config["queue"], config["m"])
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
 
     run_job(" ".join(cmds),
-    job_name = "runPhantomPeak_" + os.path.basename(BamFileName),
-    job_other_options = cluster_options,
-    job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-    job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-    retain_job_scripts = True, drmaa_session=my_drmaa_session)
+        job_name = "runPhantomPeak_" + os.path.basename(BamFileName),
+        job_other_options = cluster_options(config, "runPhantomPeak", cores, logfile),
+        job_script_directory = os.path.dirname(os.path.realpath(__file__)),
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
+        retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
