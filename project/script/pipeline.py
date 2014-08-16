@@ -103,10 +103,10 @@ def runFastqc(BamFileName, fastqcLog, config):
     return stdout
 
 @follows(runFastqc, mkdir(rmdup_path))
-@transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}.bam"), config)
+@transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}_rmdup.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
-    To run FastQC
+    To remove duplicates
     Arguments:
     - `BamFileName`: bam file
     - `config`: config
@@ -117,8 +117,8 @@ def rmdupBam(BamFileName, rmdupFile, config):
         cmds = ['rmdup_PE.bam.sh']
     cmds.append(BamFileName)
     cmds.append(rmdup_path)
-    if "bam_sort_buff" in config:
-        cmds.append(config["bam_sort_buff"])
+    #if "bam_sort_buff" in config:
+    #    cmds.append(config["bam_sort_buff"])
     logfile = BamFileName + ".rmdup.log"
     p = subprocess.Popen(
         cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),

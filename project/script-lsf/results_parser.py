@@ -113,7 +113,7 @@ def getFileId(file_basename):
     """
     Remove suffix of the summary file to get file id.
     """
-    suffixes = ['.fastq.alignment.log', '.fq.alignment.log', '.gz.alignment.log', '.bam.rmdup.log', '.bam.phantomPeak.log']
+    suffixes = ['.fastq.alignment.log', '.fq.alignment.log', '.gz.alignment.log', '.bam.rmdup.log', '_rmdup.bam.phantomPeak.log']
     for suffix in suffixes:
         file_basename = file_basename.replace(suffix, '')
     return file_basename
