@@ -29,3 +29,4 @@ fastqc_threads: 4
 IGV_genome: "reference_genome"
 ngsplot_genome: "reference_genome"
 ngsplot_fraglen: 150
+

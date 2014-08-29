@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+
 import os
 import sys
 import yaml
@@ -30,6 +32,27 @@ def genFilesWithPattern(pathList, Pattern):
     Files = expandOsPath(os.path.join(*pathList))
     return Files
 
+def cluster_options(config, task_name, cores, logfile):
+    """
+    Generate a string of cluster options to feed an LSF job.
+    Arguments:
+    - `config`: configuration as associative array from the YAML file.
+    - `task_name`: the specific task name, such as runPhantomPeak.
+    - `cores`: number of cores to use for this task.
+    - `logfile`: log file name.
+    """
+
+    str_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash" % \
+        (config["wall_time"][task_name], cores, logfile, logfile, config["queue"]) 
+    # Name of the partition where you want to run your job. By default, the cluster will assign one for you.
+    if "m" in config:
+        str_options = str_options + " -m %s" % (config["m"])
+    # Allocation account. By default, will use the free account (i.e. scavenger on Minerva).
+    if "alloc" in config:
+        str_options = str_options + " -P %s" % (config["alloc"])
+    return str_options
+
+
 config_name = sys.argv[1]
 config_f = open(config_name, "r")
 config = yaml.load(config_f)
@@ -38,10 +61,13 @@ inputfiles = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]
 FqFiles = [x for x in glob.glob(inputfiles)]
 fq_name, fq_ext = os.path.splitext(config["input_files"])
 fq_ext_suffix = ".alignment.log"
+Bam_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"])) + "/"
+FastQC_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))
+rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
 
 scipt_path = os.path.dirname(os.path.realpath(__file__))
 
-@transform(FqFiles, suffix(fq_ext), fq_ext_suffix, config)
+@transform(FqFiles, formatter(fq_ext), os.path.join(Bam_path, "{basename[0]}.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
     To align '.fastq' to genome.
@@ -66,29 +92,25 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     target = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]))
     cmds.append(target)
+    cmds.append(config["pair_end"])
     cores = int(config['cores'])
     if cores == 0:
         cores = 1
     cmds.append(str(cores))
     logfile = FqFileName + ".alignment.log"
 
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["alignFastqByBowtie"], cores, logfile, logfile, config["queue"], config["m"])
-
     run_job(" ".join(cmds),
         job_name = "alignFastqByBowtie_" + os.path.basename(FqFileName),
-        job_other_options = cluster_options,
+        job_other_options = cluster_options(config, "alignFastqByBowtie", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
-BamFiles = genFilesWithPattern([config["project_dir"], config["data_dir"]], "*.bam")
-
-@follows(alignFastqByBowtie, mkdir(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))))
-@transform(BamFiles, suffix(".bam"), ".bam.fastqc.log", config)
-def runFastqc(BamFileName, fastqcZip, config):
+@follows(alignFastqByBowtie, mkdir(FastQC_path))
+@transform(alignFastqByBowtie, suffix(".bam"), ".bam.fastqc.log", config)
+def runFastqc(BamFileName, fastqcLog, config):
     """
     To run FastQC
     Arguments:
@@ -98,35 +120,28 @@ def runFastqc(BamFileName, fastqcZip, config):
     cmds = ['fastqc']
     cmds.append("-o")
     cmds.append(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC")))
-    if "fastqc_threads" in config:
-        cmds.append("-t")
-        cmds.append(str(config["fastqc_threads"]))
-    else:
-        cmds.append("-t")
-        cmds.append("2")
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
+    cmds.append("-t")
+    cmds.append(str(cores))
     cmds.append(BamFileName)
     logfile = BamFileName + ".fastqc.log"
 
-    cores = config["fastqc_threads"]
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["runFastqc"], cores, logfile, logfile, config["queue"], config["m"])
-
     run_job(" ".join(cmds),
         job_name = "fastqc_" + os.path.basename(BamFileName),
-        job_other_options = cluster_options,
+        job_other_options = cluster_options(config, "runFastqc", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
-rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
-
 @follows(runFastqc, mkdir(rmdup_path))
-@transform(BamFiles, suffix(".bam"), ".bam.rmdup.log", config)
+@transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}_rmdup.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
-    To run FastQC
+    To remove duplicates
     Arguments:
     - `BamFileName`: bam file
     - `config`: config
@@ -137,28 +152,23 @@ def rmdupBam(BamFileName, rmdupFile, config):
         cmds = ['rmdup_PE.bam.sh']
     cmds.append(BamFileName)
     cmds.append(rmdup_path)
-    if "bam_sort_buff" in config:
-        cmds.append(config["bam_sort_buff"])
+    #if "bam_sort_buff" in config:
+    #    cmds.append(config["bam_sort_buff"])
     logfile = BamFileName + ".rmdup.log"
 
     cores = 1
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["rmdupBam"], cores, logfile, logfile, config["queue"], config["m"])
 
     run_job(" ".join(cmds),
         job_name = "rmdup_" + os.path.basename(BamFileName),
-        job_other_options = cluster_options,
+        job_other_options = cluster_options(config, "rmdupBam", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
-rmdupBamFiles = genFilesWithPattern([rmdup_path], "*.bam")
-
-# @follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
-@follows(mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
-@transform(rmdupBamFiles, suffix(".bam"), ".bam.tdf.log", config)
+@follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
+@transform(rmdupBam, suffix(".bam"), ".bam.tdf.log", config)
 def genTDF(BamFileName, tdfLog, config):
     """
     To generate TDF files for IGV
@@ -176,20 +186,18 @@ def genTDF(BamFileName, tdfLog, config):
     logfile = BamFileName + ".tdf.log"
 
     cores = 1
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["genTDF"], cores, logfile, logfile, config["queue"], config["m"])
 
     run_job(" ".join(cmds),
-    job_name = "genTDF_" + os.path.basename(BamFileName),
-    job_other_options = cluster_options,
-    job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-    job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-    retain_job_scripts = True, drmaa_session=my_drmaa_session)
+        job_name = "genTDF_" + os.path.basename(BamFileName),
+        job_other_options = cluster_options(config, "genTDF", cores, logfile),
+        job_script_directory = os.path.dirname(os.path.realpath(__file__)),
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
+        retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
 @follows(genTDF)
-@transform(rmdupBamFiles, suffix(".bam"), ".bam.phantomPeak.log", config)
+@transform(rmdupBam, suffix(".bam"), ".bam.phantomPeak.log", config)
 def runPhantomPeak(BamFileName, Log, config):
     """
     To check data with phantomPeak
@@ -200,24 +208,24 @@ def runPhantomPeak(BamFileName, Log, config):
     cmds = ['runPhantomPeak.sh']
     cmds.append(BamFileName)
     cmds.append(str(config["cores"]))
-    logfile = BamFileName + ".phantomPeak.log"\
+    logfile = BamFileName + ".phantomPeak.log"
 
-    cores = config["cores"]
-    cluster_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash -m %s" % \
-        (config["wall_time"]["runPhantomPeak"], cores, logfile, logfile, config["queue"], config["m"])
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
 
     run_job(" ".join(cmds),
-    job_name = "runPhantomPeak_" + os.path.basename(BamFileName),
-    job_other_options = cluster_options,
-    job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-    job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-    retain_job_scripts = True, drmaa_session=my_drmaa_session)
+        job_name = "runPhantomPeak_" + os.path.basename(BamFileName),
+        job_other_options = cluster_options(config, "runPhantomPeak", cores, logfile),
+        job_script_directory = os.path.dirname(os.path.realpath(__file__)),
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
+        retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
 if __name__ == '__main__':
     ## run to step of PhantomPeak
     ## multithread number need to be changed!
-    pipeline_run([runPhantomPeak], multithread=3)
+    pipeline_run([runPhantomPeak], multithread=10)
     
     my_drmaa_session.exit()

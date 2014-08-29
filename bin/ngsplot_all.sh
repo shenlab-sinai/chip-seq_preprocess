@@ -21,10 +21,17 @@ ngs.plot.r -G ${2} -C config.cov.txt -R genebody -O ${3}_${5} -FL ${5} -N 0.33 -
 ngs.plot.r -G ${2} -C config.cov.txt -R tss -O ${3}_tss_${5} -FL ${5} -P ${4}
 ngs.plot.r -G ${2} -C config.cov.txt -R tes -O ${3}_tes_${5} -FL ${5} -P ${4}
 
-genNormedNgsplotConfig.py ${1} > config.cov.norm.txt
-ngs.plot.r -G ${2} -C config.cov.norm.txt -R genebody -O ${3}_norm_${5} -FL ${5} -N 0.33 -P ${4}
-ngs.plot.r -G ${2} -C config.cov.norm.txt -R tss -O ${3}_norm_tss_${5} -FL ${5} -P ${4}
-ngs.plot.r -G ${2} -C config.cov.norm.txt -R tes -O ${3}_norm_tes_${5} -FL ${5} -P ${4}
+IF_INPUT_EXIST=`ls | grep "[I|i]nput.*\.bam$" | wc -l`
+zero=0
+
+if [ $IF_INPUT_EXIST -eq $zero ]; then
+	echo "There is no DNA input.";
+else
+	genNormedNgsplotConfig.py ${1} > config.cov.norm.txt
+	ngs.plot.r -G ${2} -C config.cov.norm.txt -R genebody -O ${3}_norm_${5} -FL ${5} -N 0.33 -P ${4}
+	ngs.plot.r -G ${2} -C config.cov.norm.txt -R tss -O ${3}_norm_tss_${5} -FL ${5} -P ${4}
+	ngs.plot.r -G ${2} -C config.cov.norm.txt -R tes -O ${3}_norm_tes_${5} -FL ${5} -P ${4}
+fi
 
 cd ${CWD}
 exit 0

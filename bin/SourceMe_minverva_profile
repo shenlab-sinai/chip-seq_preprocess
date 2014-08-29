@@ -1,0 +1,9 @@
+# Add pipeline bin folder to PATH.
+WD=`pwd`
+echo "Message: Will add $WD to PATH"
+export PATH=$PATH:$WD
+
+# Load modules.
+module load python py_packages
+module load R phantompeaks
+module load bowtie fastqc samtools igvtools ngsplot
