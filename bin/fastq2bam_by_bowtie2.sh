@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 ## To align fastq file to genome by bowtie
 ## $1: fastq file
 ## $2: bowtie2 index file with path
