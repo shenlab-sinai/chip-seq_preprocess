@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 ## To align fastq file to genome by bowtie
 ## $1: fastq file
 ## $2: bowtie2 index file with path
@@ -32,6 +32,7 @@ if [[ "$PE" == "no" ]]; then
 		    ;;
 	esac
 else
+  FILE2=${FQDIR}/${FILENAME/R1/R2}
 	case "$EXT" in
 		fq | fastq | FQ | FASTQ ) bowtie2 -p ${CORES} -x ${BOWTIE_INDEX} \
 		                                -1 ${FILE} -2 ${FILE2} > ${SAM}
