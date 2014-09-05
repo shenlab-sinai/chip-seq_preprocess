@@ -1,4 +1,4 @@
-#! /bin/bash
+#! /usr/bin/env bash
 ## To align fastq file to genome by bowtie
 ## $1: fastq file
 ## $2: bowtie index file with path
@@ -32,7 +32,7 @@ if [[ "${PE}" == "no" ]]; then
 		    ;;
 	esac
 else
-	echo "${PE}"
+  FILE2=${FQDIR}/${FILENAME/R1/R2}
 	case "$EXT" in
 		fq | fastq | FQ | FASTQ ) bowtie -p ${CORES} -q -m 1 -v 3 --sam --best --strata ${BOWTIE_INDEX} \
 		                                -1 ${FILE} -2 ${FILE2} > ${SAM}
@@ -51,4 +51,3 @@ samtools sort -m 5G ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
 samtools index ${SAM/sam/bam}
 rm ${SAM} ${SAM/sam/nonSorted.bam}
 mv ${SAM/sam/bam}* ${3}
-
