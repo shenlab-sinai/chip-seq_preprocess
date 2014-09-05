@@ -32,7 +32,7 @@ if [[ "${PE}" == "no" ]]; then
 		    ;;
 	esac
 else
-	FILE2=${FQDIR}/${FILENAME/R1/R2}
+  FILE2=${FQDIR}/${FILENAME/R1/R2}
 	case "$EXT" in
 		fq | fastq | FQ | FASTQ ) bowtie -p ${CORES} -q -m 1 -v 3 --sam --best --strata ${BOWTIE_INDEX} \
 		                                -1 ${FILE} -2 ${FILE2} > ${SAM}
