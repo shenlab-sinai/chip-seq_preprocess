@@ -26,7 +26,7 @@ The softwares used in this pipeline are:
 * [IGVTools](http://www.broadinstitute.org/igv/igvtools)
 * [PhantomPeak](http://code.google.com/p/phantompeakqualtools/) __In fact, the script **run_spp_nodups.R** is from PhantomPeak, but PhantomPeak still need to be installed in R.__
 * [ngs.plot](https://code.google.com/p/ngsplot/)
-* If cluster supporting needed, [drmaa_for_python](https://pypi.python.org/pypi/drmaa) is needed. Now only LSF is supported, but it is easy to modify it to fit your demands.
+* If cluster supporting needed, [drmaa_for_python](https://pypi.python.org/pypi/drmaa) is needed. Now LSF and SGE are supported, but it is easy to modify it to fit your demands.
 
 Install above softwares and make sure they are in $PATH.
 
@@ -40,7 +40,7 @@ Put the scripts in ./bin to a place in $PATH or add ./bin to $PATH.
 python pipeline.py config.yaml
 ```
 
-Or on an LSF cluster:
+Or on an LSF or SGE cluster:
 
 ```bash
 nohup python pipeline.py config.yaml &
