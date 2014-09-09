@@ -32,6 +32,22 @@ def genFilesWithPattern(pathList, Pattern):
     Files = expandOsPath(os.path.join(*pathList))
     return Files
 
+def writeLog(logfile, stdout_res, stderr_res):
+    """
+    To write the log information from drmaa to log file.
+    Arguments:
+    - `logfile`: file name of target logfile.
+    - `stdout_res`: list, return from drmaa, stdout of the job.
+    - `stderr_res`: list, return from drmaa, stderr of the job.
+    """
+    log_f = file(logfile, "w")
+    log_f.write("Stdout:\n")
+    log_f.write("".join(stdout_res))
+    log_f.write("\nStderr:\n")
+    log_f.write("".join(stderr_res))
+    log_f.close()
+    return 0
+
 def cluster_options(config, task_name, cores, logfile):
     """
     Generate a string of cluster options to feed an LSF job.
@@ -95,12 +111,14 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     cmds.append(str(cores))
     logfile = FqFileName + ".alignment.log"
 
-    run_job(" ".join(cmds),
+    stdout_res, stderr_res = run_job(" ".join(cmds),
         job_name = "alignFastqByBowtie_" + os.path.basename(FqFileName),
         job_other_options = cluster_options(config, "alignFastqByBowtie", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-        job_environment={ 'BASH_ENV' : '/srv/gsfs0/home/nshao/.bashrc' },
+        job_environment={ 'BASH_ENV' : '~/.bashrc' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
+
+    writeLog(logfile, stdout_res, stderr_res)
 
     return 0
 
@@ -124,12 +142,14 @@ def runFastqc(BamFileName, fastqcLog, config):
     cmds.append(BamFileName)
     logfile = BamFileName + ".fastqc.log"
 
-    run_job(" ".join(cmds),
+    stdout_res, stderr_res = run_job(" ".join(cmds),
         job_name = "fastqc_" + os.path.basename(BamFileName),
         job_other_options = cluster_options(config, "runFastqc", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bashrc' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
+
+    writeLog(logfile, stdout_res, stderr_res)
 
     return 0
 
@@ -154,12 +174,14 @@ def rmdupBam(BamFileName, rmdupFile, config):
 
     cores = 1
 
-    run_job(" ".join(cmds),
+    stdout_res, stderr_res = run_job(" ".join(cmds),
         job_name = "rmdup_" + os.path.basename(BamFileName),
         job_other_options = cluster_options(config, "rmdupBam", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bashrc' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
+
+    writeLog(logfile, stdout_res, stderr_res)
 
     return 0
 
@@ -183,12 +205,14 @@ def genTDF(BamFileName, tdfLog, config):
 
     cores = 1
 
-    run_job(" ".join(cmds),
+    stdout_res, stderr_res = run_job(" ".join(cmds),
         job_name = "genTDF_" + os.path.basename(BamFileName),
         job_other_options = cluster_options(config, "genTDF", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bashrc' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
+
+    writeLog(logfile, stdout_res, stderr_res)
 
     return 0
 
@@ -210,12 +234,14 @@ def runPhantomPeak(BamFileName, Log, config):
     if cores == 0:
         cores = 1
 
-    run_job(" ".join(cmds),
+    stdout_res, stderr_res = run_job(" ".join(cmds),
         job_name = "runPhantomPeak_" + os.path.basename(BamFileName),
         job_other_options = cluster_options(config, "runPhantomPeak", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bashrc' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
+
+    writeLog(logfile, stdout_res, stderr_res)
 
     return 0
 
