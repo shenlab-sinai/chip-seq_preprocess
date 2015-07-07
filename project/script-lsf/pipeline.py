@@ -64,9 +64,11 @@ fq_ext_suffix = ".alignment.log"
 Bam_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"])) + "/"
 FastQC_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))
 rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
+diffrepeat_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "diffrepeat"))
 
 scipt_path = os.path.dirname(os.path.realpath(__file__))
 
+@follows(mkdir(diffrepeat_path), mkdir(FastQC_path), mkdir(rmdup_path), mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
 @transform(FqFiles, formatter(fq_ext), os.path.join(Bam_path, "{basename[0]}.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
@@ -100,7 +102,7 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     logfile = FqFileName + ".alignment.log"
 
     run_job(" ".join(cmds),
-        job_name = "alignFastqByBowtie_" + os.path.basename(FqFileName),
+        job_name = os.path.basename(FqFileName) + "_alignFastqByBowtie",
         job_other_options = cluster_options(config, "alignFastqByBowtie", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
@@ -108,7 +110,7 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     return 0
 
-@follows(alignFastqByBowtie, mkdir(FastQC_path))
+@follows(alignFastqByBowtie)
 @transform(alignFastqByBowtie, suffix(".bam"), ".bam.fastqc.log", config)
 def runFastqc(BamFileName, fastqcLog, config):
     """
@@ -129,7 +131,7 @@ def runFastqc(BamFileName, fastqcLog, config):
     logfile = BamFileName + ".fastqc.log"
 
     run_job(" ".join(cmds),
-        job_name = "fastqc_" + os.path.basename(BamFileName),
+        job_name = os.path.basename(BamFileName) + "_fastqc",
         job_other_options = cluster_options(config, "runFastqc", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
@@ -137,7 +139,7 @@ def runFastqc(BamFileName, fastqcLog, config):
 
     return 0
 
-@follows(runFastqc, mkdir(rmdup_path))
+@follows(runFastqc)
 @transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}_rmdup.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
@@ -159,7 +161,7 @@ def rmdupBam(BamFileName, rmdupFile, config):
     cores = 1
 
     run_job(" ".join(cmds),
-        job_name = "rmdup_" + os.path.basename(BamFileName),
+        job_name = os.path.basename(BamFileName) + "_rmdup",
         job_other_options = cluster_options(config, "rmdupBam", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
@@ -167,7 +169,7 @@ def rmdupBam(BamFileName, rmdupFile, config):
 
     return 0
 
-@follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
+@follows(rmdupBam)
 @transform(rmdupBam, suffix(".bam"), ".bam.tdf.log", config)
 def genTDF(BamFileName, tdfLog, config):
     """
@@ -188,7 +190,7 @@ def genTDF(BamFileName, tdfLog, config):
     cores = 1
 
     run_job(" ".join(cmds),
-        job_name = "genTDF_" + os.path.basename(BamFileName),
+        job_name = os.path.basename(BamFileName) + "_genTDF",
         job_other_options = cluster_options(config, "genTDF", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
@@ -196,7 +198,7 @@ def genTDF(BamFileName, tdfLog, config):
 
     return 0
 
-@follows(genTDF)
+@follows(rmdupBam)
 @transform(rmdupBam, suffix(".bam"), ".bam.phantomPeak.log", config)
 def runPhantomPeak(BamFileName, Log, config):
     """
@@ -215,7 +217,7 @@ def runPhantomPeak(BamFileName, Log, config):
         cores = 1
 
     run_job(" ".join(cmds),
-        job_name = "runPhantomPeak_" + os.path.basename(BamFileName),
+        job_name = os.path.basename(BamFileName) + "_runPhantomPeak",
         job_other_options = cluster_options(config, "runPhantomPeak", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
@@ -223,9 +225,38 @@ def runPhantomPeak(BamFileName, Log, config):
 
     return 0
 
+@follows(genTDF, runPhantomPeak)
+@merge(alignFastqByBowtie, expandOsPath(os.path.join(diffrepeat_path, config["project_name"]+".diffrepeat.resulttable")), config)
+def runDiffrepeat(BamFileNames, Log, config):
+    """
+    To run diffrepeats
+    Arguments:
+    - `BamFileNames`: bam files
+    - `config`: config
+    """
+    cmds = ['runDiffrepeat.sh']
+    cmds.append(diffrepeat_path)
+    cmds.append(config["repbase_db"])
+    cmds.append(expandOsPath(os.path.join(diffrepeat_path, config["project_name"]+".diffrepeat.resulttable")))
+    logfile = expandOsPath(os.path.join(diffrepeat_path, config["project_name"]+".diffrepeat.log"))
+
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
+
+    run_job(" ".join(cmds),
+        job_name = "runDiffRepeat",
+        job_other_options = cluster_options(config, "runDiffrepeat", cores, logfile),
+        job_script_directory = os.path.dirname(os.path.realpath(__file__)),
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
+        retain_job_scripts = True, drmaa_session=my_drmaa_session)
+
+    return 0
+
 if __name__ == '__main__':
+    pipeline_printout_graph("all_flowchart.png", "png", [runDiffrepeat], pipeline_name="Preprocessing of ChIP-seq on LSF")
+
     ## run to step of PhantomPeak
     ## multithread number need to be changed!
-    pipeline_run([runPhantomPeak], multithread=10)
-    
+    pipeline_run([runDiffrepeat], multithread=6)
     my_drmaa_session.exit()

@@ -40,9 +40,9 @@ alloc: "acc_shenl03c"  # use "acc_shenl03a" to use allocations.
 
 ## wall_time for every step, hh:mm
 wall_time:
-    alignFastqByBowtie: "1:00"
-    runFastqc: "1:00"
-    rmdupBam: "1:00"
-    genTDF: "1:00"
-    runPhantomPeak: "1:00"
-    runDiffrepeat: "1:00"
+    alignFastqByBowtie: "0:30"
+    runFastqc: "0:30"
+    rmdupBam: "0:30"
+    genTDF: "0:30"
+    runPhantomPeak: "0:30"
+    runDiffrepeat: "0:30"
