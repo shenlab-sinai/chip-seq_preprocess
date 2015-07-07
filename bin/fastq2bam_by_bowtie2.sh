@@ -60,15 +60,15 @@ if [[ "$PE" == "no" ]]; then
    cp ${SAM/sam/uniqmapped.sam} ${SAM}
    samtools view -Shb ${SAM/sam/uniqmapped.sam} > ${SAM/sam/uniqmapped.bam}
 
-   samtools merge ${SAM/sam/uniqNmultimapped.bam} ${SAM/sam/uniqmapped.bam} ${SAM/sam/multimapped.bam}
-   bamToFastq -i ${SAM/sam/uniqNmultimapped.bam} -fq ${SAM/sam/uniqNmultimapped.fastq}
+   samtools merge ${SAM/sam/unNmultimapped.bam} ${SAM/sam/unmapped.bam} ${SAM/sam/multimapped.bam}
+   bamToFastq -i ${SAM/sam/unNmultimapped.bam} -fq ${SAM/sam/unNmultimapped.fastq}
 
    mv ${SAM/sam/unmapped.bam} ${3}
    mv ${SAM/sam/multimapped.bam} ${3}
    mv ${SAM/sam/uniqmapped.bam} ${3}
-   mv ${SAM/sam/uniqNmultimapped.fastq} ${3}
+   mv ${SAM/sam/unNmultimapped.fastq} ${3}
 
-   rm ${SAM/sam/multimapped.sam} ${SAM/sam/uniqmapped.sam} ${SAM/sam/mapped.sam} ${SAM/sam/uniqNmultimapped.bam} 
+   rm ${SAM/sam/multimapped.sam} ${SAM/sam/uniqmapped.sam} ${SAM/sam/mapped.sam} ${SAM/sam/unNmultimapped.bam} 
 fi
 #todo: implement similar steps for paired end
 
