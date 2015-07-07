@@ -1,27 +1,31 @@
-project_name: "test_ChIP-seq"
-project_dir: "~/projects/test_ChIP-seq"
+project_name: "Test-ChIP-seq"
+project_dir: "/sc/orga/projects/shenl03c/Eddie/ChIPseq_Projects/Test"
+
+## the folder under project folder, containing fastq folder.
+data_dir: "Data"
 
 ## Aligner: bowtie or bowtie2
-aligner: "bowtie"
+aligner: "bowtie2"
 pair_end: "no"
 
 ## If use bowtie, then bowtie1 index path to be assigned here.
 ## "Genome" replaced by genome name as "hg19" or "mm9", and
 ## uncomment next line.
-bowtie_index: "~/data/bowtie_index/Genome"
+#bowtie_index: "/sc/orga/work/lohy01/Databases/BowtieIndex/MM9/genome"
 
 ## If use bowtie2, then "Genome" should be replace by
 ## bowtie2 index name, as "hg19" or "mm9"
 ## $BOWTIE2_INDEXES should be added in the environment variables
-# bowtie_index: "Genome"
+bowtie_index: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9"
+#bowtie_index: "genome"
 
 bam_sort_buff: "8G"
-IGV_genome: "reference_genome"
+IGV_genome: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9.chrom.sizes"  #"reference_genome"
 # ngsplot_genome: "reference_genome"
 # ngsplot_fraglen: 150
 
-## the folder under project folder, containing fastq folder.
-data_dir: "data"
+## repbase database for diffRepeats
+repbase_db: "/sc/orga/work/lohy01/Databases/RepBase/repbase_mouseNancest.fa"
 
 ## match pattern for input files. Now it could be:
 ## *.fastq, *.fq, *.gz
@@ -29,15 +33,16 @@ data_dir: "data"
 input_files: "*.fastq"
 
 ## cluster settings
-cores: 8  # number of cores to use for multi-threaded programs.
-queue: "scavenger"  # scavenger is free. Use alloc or expressalloc for paid queues.
-# m: "partition_to_run"  # by default, the cluster will choose a partition to run your job.
-# alloc: "scavenger"  # use "acc_shenl03a" to use allocations.
+cores: 4  # number of cores to use for multi-threaded programs.
+queue: "alloc"  # scavenger is free. Use alloc or expressalloc for paid queues.
+m: "mothra"  # by default, the cluster will choose a partition to run your job.
+alloc: "acc_shenl03c"  # use "acc_shenl03a" to use allocations.
 
 ## wall_time for every step, hh:mm
 wall_time:
-    alignFastqByBowtie: "23:59"
-    runFastqc: "4:00"
-    rmdupBam: "20:00"
-    genTDF: "20:00"
-    runPhantomPeak: "20:00"
+    alignFastqByBowtie: "1:00"
+    runFastqc: "1:00"
+    rmdupBam: "1:00"
+    genTDF: "1:00"
+    runPhantomPeak: "1:00"
+    runDiffrepeat: "1:00"
