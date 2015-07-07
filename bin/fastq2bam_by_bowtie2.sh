@@ -48,22 +48,27 @@ fi
 
 if [[ "$PE" == "no" ]]; then
    samtools view -Shb -f 4 ${SAM} > ${SAM/sam/unmapped.bam}
-   mv ${SAM/sam/unmapped.bam} ${3}
    
    samtools view -Sh -F 4 ${SAM} > ${SAM/sam/mapped.sam}
  
    samtools view -SH ${SAM} > ${SAM/sam/multimapped.sam} 
    grep "XS:i" ${SAM/sam/mapped.sam} >> ${SAM/sam/multimapped.sam}
    samtools view -Shb ${SAM/sam/multimapped.sam} > ${SAM/sam/multimapped.bam}
-   mv ${SAM/sam/multimapped.bam} ${3}
  
    samtools view -SH ${SAM} > ${SAM/sam/uniqmapped.sam} 
    grep "AS:i" ${SAM/sam/mapped.sam} | grep -v "XS:i" >> ${SAM/sam/uniqmapped.sam}
    cp ${SAM/sam/uniqmapped.sam} ${SAM}
    samtools view -Shb ${SAM/sam/uniqmapped.sam} > ${SAM/sam/uniqmapped.bam}
-   mv ${SAM/sam/uniqmapped.bam} ${3}
 
-   rm ${SAM/sam/multimapped.sam} ${SAM/sam/uniqmapped.sam} ${SAM/sam/mapped.sam}
+   samtools merge ${SAM/sam/uniqNmultimapped.bam} ${SAM/sam/uniqmapped.bam} ${SAM/sam/multimapped.bam}
+   bamToFastq -i ${SAM/sam/uniqNmultimapped.bam} -fq ${SAM/sam/uniqNmultimapped.fastq}
+
+   mv ${SAM/sam/unmapped.bam} ${3}
+   mv ${SAM/sam/multimapped.bam} ${3}
+   mv ${SAM/sam/uniqmapped.bam} ${3}
+   mv ${SAM/sam/uniqNmultimapped.fastq} ${3}
+
+   rm ${SAM/sam/multimapped.sam} ${SAM/sam/uniqmapped.sam} ${SAM/sam/mapped.sam} ${SAM/sam/uniqNmultimapped.bam} 
 fi
 #todo: implement similar steps for paired end
 
