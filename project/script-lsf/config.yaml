@@ -27,6 +27,10 @@ IGV_genome: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9.chrom.sizes"  #
 ## repbase database for diffRepeats
 repbase_db: "/sc/orga/work/lohy01/Databases/RepBase/repbase_mouseNancest.fa"
 
+## set whether or not to run phantomPeak
+## "yes" or "no"
+run_phantompeak: "yes"
+
 ## match pattern for input files. Now it could be:
 ## *.fastq, *.fq, *.gz
 ## for pair end data, use "*R1*.fastq.gz" or "*R1*.fastq"
@@ -35,7 +39,7 @@ input_files: "*.fastq"
 ## cluster settings
 cores: 4  # number of cores to use for multi-threaded programs.
 queue: "alloc"  # scavenger is free. Use alloc or expressalloc for paid queues.
-m: "mothra"  # by default, the cluster will choose a partition to run your job.
+m: "manda"  # by default, the cluster will choose a partition to run your job.
 alloc: "acc_shenl03c"  # use "acc_shenl03a" to use allocations.
 
 ## wall_time for every step, hh:mm
