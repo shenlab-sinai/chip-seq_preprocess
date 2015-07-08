@@ -112,28 +112,31 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     return 0
 
-@follows(alignFastqByBowtie, mkdir(fastqc_path))
-@transform(alignFastqByBowtie, formatter(".bam"), os.path.join(log_path, "{basename[0]}.bam.fastqc.log"), config)
-def runFastqc(BamFileName, fastqcLog, config):
+@follows(mkdir(fastqc_path))
+@transform(FqFiles, formatter(fq_ext), os.path.join(log_path, "{basename[0]}.bam.fastqc.log"), config)
+def runFastqc(FqFileName, fastqcLog, config):
     """
     To run FastQC
     Arguments:
-    - `BamFileName`: bam file
+    - `FqFileName`: fastq file
     - `config`: config
     """
-    cmds = ['fastqc']
-    cmds.append("-o")
+    cmds = ['runFastQC.sh']
+    #cmds.append("-o")
     cmds.append(fastqc_path)
     cores = int(config['cores'])
     if cores == 0:
         cores = 1
-    cmds.append("-t")
+    #cmds.append("-t")
     cmds.append(str(cores))
-    cmds.append(BamFileName)
+    cmds.append(FqFileName)
+
+    cmds.append(config["pair_end"])
+
     logfile = fastqcLog
     
     run_job(" ".join(cmds),
-        job_name = os.path.basename(BamFileName) + "_fastqc",
+        job_name = os.path.basename(FqFileName) + "_fastqc",
         job_other_options = cluster_options(config, "runFastqc", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
@@ -238,7 +241,7 @@ def runDiffrepeat(BamFileNames, ResultFile, config):
     """
     cmds = ['runDiffrepeat.sh']
     cmds.append(diffrepeat_path)
-    cmds.append(diffrepeat_path)
+    cmds.append(alignment_path)
     cmds.append(config["repbase_db"])
     cmds.append(ResultFile)
     logfile = expandOsPath(os.path.join(log_path, config["project_name"]+".diffrepeat.log"))
