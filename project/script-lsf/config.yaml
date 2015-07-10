@@ -24,8 +24,10 @@ IGV_genome: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9.chrom.sizes"  #
 # ngsplot_genome: "reference_genome"
 # ngsplot_fraglen: 150
 
-## repbase database for diffRepeats
+## diffRepeats: repbase database
 repbase_db: "/sc/orga/work/lohy01/Databases/RepBase/repbase_mouseNancest.fa"
+## diffRepeats: edit distance for bwa aligner used
+diffrepeat_editdist: "0.04"
 
 ## set whether or not to run phantomPeak
 ## "yes" or "no"

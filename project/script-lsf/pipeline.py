@@ -71,8 +71,15 @@ log_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], 
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
-@follows(mkdir(alignment_path), mkdir(log_path))
-@transform(FqFiles, formatter(fq_ext), os.path.join(alignment_path, "{basename[0]}.bam"), config)
+@follows(mkdir(alignment_path), mkdir(log_path), mkdir(fastqc_path), mkdir(rmdup_path), mkdir(tdf_path), mkdir(phantompeak_path), mkdir(diffrepeat_path))
+@originate(FqFiles)
+def initiateFiles(output_file):
+    """
+    dummy step to initialize files
+    """
+    return 0
+
+@transform(initiateFiles, formatter(fq_ext), os.path.join(alignment_path, "{basename[0]}.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
     To align '.fastq' to genome.
@@ -112,8 +119,8 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     return 0
 
-@follows(mkdir(fastqc_path))
-@transform(FqFiles, formatter(fq_ext), os.path.join(log_path, "{basename[0]}.bam.fastqc.log"), config)
+#@follows(mkdir(fastqc_path))
+@transform(initiateFiles, formatter(fq_ext), os.path.join(log_path, "{basename[0]}.bam.fastqc.log"), config)
 def runFastqc(FqFileName, fastqcLog, config):
     """
     To run FastQC
@@ -144,7 +151,7 @@ def runFastqc(FqFileName, fastqcLog, config):
 
     return 0
 
-@follows(alignFastqByBowtie, mkdir(rmdup_path))
+#@follows(alignFastqByBowtie, mkdir(rmdup_path))
 @transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}_rmdup.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
@@ -174,7 +181,7 @@ def rmdupBam(BamFileName, rmdupFile, config):
 
     return 0
 
-@follows(rmdupBam, mkdir(tdf_path))
+#@follows(rmdupBam, mkdir(tdf_path))
 @transform(rmdupBam, formatter(".bam"), os.path.join(log_path, "{basename[0]}.bam.tdf.log"), config)
 def genTDF(BamFileName, tdfLog, config):
     """
@@ -202,7 +209,7 @@ def genTDF(BamFileName, tdfLog, config):
 
     return 0
 
-@follows(rmdupBam, mkdir(phantompeak_path))
+#@follows(rmdupBam, mkdir(phantompeak_path))
 @transform(rmdupBam, formatter(".bam"), os.path.join(log_path, "{basename[0]}.bam.phantomPeak.log"), config)
 def runPhantomPeak(BamFileName, PPLog, config):
     """
@@ -230,7 +237,7 @@ def runPhantomPeak(BamFileName, PPLog, config):
 
     return 0
 
-@follows(alignFastqByBowtie, mkdir(diffrepeat_path))
+#@follows(alignFastqByBowtie, mkdir(diffrepeat_path))
 @merge(alignFastqByBowtie, expandOsPath(os.path.join(diffrepeat_path, config["project_name"]+".diffrepeat.resulttable")), config)
 def runDiffrepeat(BamFileNames, ResultFile, config):
     """
@@ -244,6 +251,7 @@ def runDiffrepeat(BamFileNames, ResultFile, config):
     cmds.append(alignment_path)
     cmds.append(config["repbase_db"])
     cmds.append(ResultFile)
+    cmds.append(config["diffrepeat_editdist"])
     logfile = expandOsPath(os.path.join(log_path, config["project_name"]+".diffrepeat.log"))
 
     cores = int(config['cores'])

@@ -5,6 +5,7 @@
 ## $2: alignment directory path where unNmultimapped.fastq files are located
 ## $3: repbase database required for diffRepeats
 ## $4: output file
+## $5: edit distance for bwa aligner used in diffRepeats
 
 CWD=`pwd`
 cd ${1}
@@ -13,9 +14,9 @@ cp $2/*unNmultimapped.fastq .
 
 FQFILES=`ls *unNmultimapped.fastq`
 
-echo "Running: diffRepeats.pl --repbase ${3} --fq $FQFILES --tbl ${4}"
+echo "Running: diffRepeats.pl --repbase ${3} --fq $FQFILES --tbl ${4} --edist ${5}"
 
-diffRepeats.pl --repbase ${3} --fq $FQFILES --tbl ${4}
+diffRepeats.pl --repbase ${3} --fq $FQFILES --tbl ${4} --edist ${5}
 
 rm *unNmultimapped.fastq *unNmultimapped.bam
 cd ${CWD}
