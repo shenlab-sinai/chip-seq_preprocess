@@ -50,8 +50,6 @@ def parse_bowtie1_log(s):
     return r
 
 def parse_bowtie2_log(s):
-    
-    
     total_pattern = re.compile(r"""(?P<total_reads>\d+)\s+reads;\s+of\s+these:""",  # total_reads
                         re.VERBOSE)
     unique_mapped_pattern = re.compile("""\s*(?P<unique_mapped_reads>\d+)\s+\(\S+\).+exactly\s+1\s+time""", # unique_mapped_reads
@@ -91,17 +89,25 @@ def parse_rmdup_log(s):
     return r
 
 def parse_phantomPeak_log(s):
-    NSC_pattern = re.compile(r'.*\(NSC\)\s*(?P<NSC>\d*\.\d*).+', re.VERBOSE)
-    RSC_pattern = re.compile(r'.*\(RSC\)\s*(?P<RSC>\d*\.\d*).+', re.VERBOSE)
+    NSC_pattern = re.compile(r'.*\(NSC\)\s*(?P<NSC>[+-]*\d*\.\d*).+', re.VERBOSE)
+    RSC_pattern = re.compile(r'.*\(RSC\)\s*(?P<RSC>[+-]*\d*\.\d*).+', re.VERBOSE)
     for line in s:
         match = NSC_pattern.match(line)
         if match:
+            print "nscMatch" #eddamend
             NSC = match.group("NSC")
         match = RSC_pattern.match(line)
         if match:
+            print "rscMatch" #eddamend
             RSC = match.group("RSC")
     res = namedtuple('res', ['NSC', 'RSC'])
+    print "nsc:" #eddamend
+    print NSC #eddamend
+    print "rsc:" #eddamend
+    print RSC #eddamend
     r = res(NSC=NSC, RSC=RSC)
+    print "r:" #eddamend
+    print r #eddamend
     return r
 
 def getSummaryFiles(input_type, config, search_paths):
