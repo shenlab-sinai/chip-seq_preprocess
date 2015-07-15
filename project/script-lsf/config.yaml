@@ -1,5 +1,6 @@
 project_name: "Test-ChIP-seq"
-project_dir: "/sc/orga/projects/shenl03c/Eddie/ChIPseq_Projects/Test"
+#project_dir: "/sc/orga/projects/shenl03c/Eddie/ChIPseq_Projects/Test"
+project_dir: "/sc/orga/scratch/lohy01/ChipPipelineTest/"
 
 ## the folder under project folder, containing fastq folder.
 data_dir: "Data"
@@ -18,6 +19,12 @@ pair_end: "no"
 ## $BOWTIE2_INDEXES should be added in the environment variables
 bowtie_index: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9"
 #bowtie_index: "genome"
+
+## Alignment parsing. Settings to determine which alignments are 'unique' and which are 'multi'. All alignments greater than parseAln_mapq AND greater than parseAln_diff (bowtie2 AS-XS score) will be determined as unique. Set to "default" for both if using the native Bowtie2 determination of unique and multi.
+parseAln_mapq: "default"    
+parseAln_diff: "default" 
+#parseAln_mapq: "20"    
+#parseAln_diff: "20" 
 
 bam_sort_buff: "8G"
 IGV_genome: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9.chrom.sizes"  #"reference_genome"

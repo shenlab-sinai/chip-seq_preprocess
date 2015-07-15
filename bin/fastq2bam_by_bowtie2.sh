@@ -2,22 +2,27 @@
 ## To align fastq file to genome by bowtie
 ## $1: fastq file
 ## $2: bowtie2 index file with path
-## $3: target folder
-## $4: if input are pair end data
-## $5[ option ]: threads to be used in alignment, default is 4
+## $3: parseAln.pl mapq cutoff
+## $4: parseAln.pl diff cutoff
+## $5: target folder
+## $6: if input are pair end data
+## $7[ option ]: threads to be used in alignment, default is 4
 
 FILE=$1
 BOWTIE_INDEX=$2
+MAPQ=$3
+DIFF=$4
+TARGET=$5
+PE=$6
 FILENAME=$(basename "$FILE")
 FQDIR=$(dirname "$FILE")
 EXT="${FILENAME##*.}"
 FILENAME_BASE="${FILENAME%.*}"
-PE=$4
 
 SAM=${FQDIR}/${FILENAME_BASE}.sam
 
-if [ -n "$5" ]; then
-    CORES=$5
+if [ -n "$7" ]; then
+    CORES=$7
 else
     CORES=4
 fi
@@ -25,7 +30,7 @@ fi
 if [[ "$PE" == "no" ]]; then
 	case "$EXT" in
 		fq | fastq | FQ | FASTQ ) bowtie2 -p ${CORES} -x ${BOWTIE_INDEX} \
-									${FILE} > ${SAM}
+									${FILE} > ${SAM} 
 		    ;;
 		gz | GZ ) zcat ${FILE} | zcat ${FILE} | bowtie2 -p ${CORES} -x ${BOWTIE_INDEX} \
 									- > ${SAM}
@@ -47,28 +52,20 @@ else
 fi
 
 if [[ "$PE" == "no" ]]; then
-   samtools view -Shb -f 4 ${SAM} > ${SAM/sam/unmapped.bam}
-   
-   samtools view -Sh -F 4 ${SAM} > ${SAM/sam/mapped.sam}
- 
-   samtools view -SH ${SAM} > ${SAM/sam/multimapped.sam} 
-   grep "XS:i" ${SAM/sam/mapped.sam} >> ${SAM/sam/multimapped.sam}
-   samtools view -Shb ${SAM/sam/multimapped.sam} > ${SAM/sam/multimapped.bam}
- 
-   samtools view -SH ${SAM} > ${SAM/sam/uniqmapped.sam} 
-   grep "AS:i" ${SAM/sam/mapped.sam} | grep -v "XS:i" >> ${SAM/sam/uniqmapped.sam}
-   cp ${SAM/sam/uniqmapped.sam} ${SAM}
-   samtools view -Shb ${SAM/sam/uniqmapped.sam} > ${SAM/sam/uniqmapped.bam}
+   parseAln.pl ${SAM} $MAPQ $DIFF
 
    samtools merge ${SAM/sam/unNmultimapped.bam} ${SAM/sam/unmapped.bam} ${SAM/sam/multimapped.bam}
    bamToFastq -i ${SAM/sam/unNmultimapped.bam} -fq ${SAM/sam/unNmultimapped.fastq}
+   
+   mv ${SAM/sam/unmapped.bam} $TARGET
+   mv ${SAM/sam/multimapped.bam} $TARGET
+   mv ${SAM/sam/uniqmapped.bam} $TARGET
+   mv ${SAM/sam/unmapped.bam.bai} $TARGET
+   mv ${SAM/sam/multimapped.bam.bai} $TARGET
+   mv ${SAM/sam/uniqmapped.bam.bai} $TARGET
+   mv ${SAM/sam/unNmultimapped.fastq} $TARGET
 
-   mv ${SAM/sam/unmapped.bam} ${3}
-   mv ${SAM/sam/multimapped.bam} ${3}
-   mv ${SAM/sam/uniqmapped.bam} ${3}
-   mv ${SAM/sam/unNmultimapped.fastq} ${3}
-
-   rm ${SAM/sam/multimapped.sam} ${SAM/sam/uniqmapped.sam} ${SAM/sam/mapped.sam} ${SAM/sam/unNmultimapped.bam} 
+   rm ${SAM/sam/unNmultimapped.bam} 
 fi
 #todo: implement similar steps for paired end
 
@@ -76,4 +73,4 @@ samtools view -Sb ${SAM} > ${SAM/sam/nonSorted.bam}
 samtools sort -m 5G ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
 samtools index ${SAM/sam/bam}
 rm ${SAM} ${SAM/sam/nonSorted.bam}
-mv ${SAM/sam/bam}* ${3}
+mv ${SAM/sam/bam}* $TARGET

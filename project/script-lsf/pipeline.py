@@ -42,7 +42,7 @@ def cluster_options(config, task_name, cores, logfile):
     - `logfile`: log file name.
     """
 
-    str_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -L /bin/bash" % \
+    str_options = "-W %s -n %d -o %s -e %s -q %s -R span[hosts=1] -R rusage[mem=6000] -L /bin/bash" % \
         (config["wall_time"][task_name], cores, logfile, logfile, config["queue"]) 
     # Name of the partition where you want to run your job. By default, the cluster will assign one for you.
     if "m" in config:
@@ -79,7 +79,7 @@ def initiateFiles(output_file):
     """
     return 0
 
-@transform(initiateFiles, formatter(fq_ext), os.path.join(alignment_path, "{basename[0]}.bam"), config)
+@transform(initiateFiles, formatter(fq_ext), os.path.join(alignment_path, "{basename[0]}.uniqmapped.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
     To align '.fastq' to genome.
@@ -95,6 +95,8 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
             cmds = ['fastq2bam_by_bowtie2.sh']
             cmds.append(FqFileName)
             cmds.append(config['bowtie_index'])
+            cmds.append(config['parseAln_mapq'])
+            cmds.append(config['parseAln_diff'])
         else:
             raise KeyError
     else:
@@ -119,7 +121,6 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
 
     return 0
 
-#@follows(mkdir(fastqc_path))
 @transform(initiateFiles, formatter(fq_ext), os.path.join(log_path, "{basename[0]}.bam.fastqc.log"), config)
 def runFastqc(FqFileName, fastqcLog, config):
     """
@@ -151,7 +152,6 @@ def runFastqc(FqFileName, fastqcLog, config):
 
     return 0
 
-#@follows(alignFastqByBowtie, mkdir(rmdup_path))
 @transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}_rmdup.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
@@ -181,7 +181,6 @@ def rmdupBam(BamFileName, rmdupFile, config):
 
     return 0
 
-#@follows(rmdupBam, mkdir(tdf_path))
 @transform(rmdupBam, formatter(".bam"), os.path.join(log_path, "{basename[0]}.bam.tdf.log"), config)
 def genTDF(BamFileName, tdfLog, config):
     """
@@ -209,7 +208,6 @@ def genTDF(BamFileName, tdfLog, config):
 
     return 0
 
-#@follows(rmdupBam, mkdir(phantompeak_path))
 @transform(rmdupBam, formatter(".bam"), os.path.join(log_path, "{basename[0]}.bam.phantomPeak.log"), config)
 def runPhantomPeak(BamFileName, PPLog, config):
     """
@@ -237,7 +235,6 @@ def runPhantomPeak(BamFileName, PPLog, config):
 
     return 0
 
-#@follows(alignFastqByBowtie, mkdir(diffrepeat_path))
 @merge(alignFastqByBowtie, expandOsPath(os.path.join(diffrepeat_path, config["project_name"]+".diffrepeat.resulttable")), config)
 def runDiffrepeat(BamFileNames, ResultFile, config):
     """
@@ -287,5 +284,5 @@ if __name__ == '__main__':
 
     ## run to step of PhantomPeak
     ## multithread number need to be changed!
-    pipeline_run([complete], multithread=6)
+    pipeline_run([complete], forcedtorun_tasks=[alignFastqByBowtie],  multithread=4)
     my_drmaa_session.exit()
