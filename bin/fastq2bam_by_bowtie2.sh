@@ -74,3 +74,4 @@ samtools sort -m 5G ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
 samtools index ${SAM/sam/bam}
 rm ${SAM} ${SAM/sam/nonSorted.bam}
 mv ${SAM/sam/bam}* $TARGET
+echo "Job Completed!!!"

@@ -284,5 +284,5 @@ if __name__ == '__main__':
 
     ## run to step of PhantomPeak
     ## multithread number need to be changed!
-    pipeline_run([complete], forcedtorun_tasks=[alignFastqByBowtie],  multithread=4)
+    pipeline_run([complete], multithread=4)
     my_drmaa_session.exit()
