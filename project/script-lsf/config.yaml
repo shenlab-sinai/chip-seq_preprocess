@@ -21,10 +21,10 @@ bowtie_index: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9"
 #bowtie_index: "genome"
 
 ## Alignment parsing. Settings to determine which alignments are 'unique' and which are 'multi'. All alignments greater than parseAln_mapq AND greater than parseAln_diff (bowtie2 AS-XS score) will be determined as unique. Set to "default" for both if using the native Bowtie2 determination of unique and multi.
-parseAln_mapq: "default"    
-parseAln_diff: "default" 
-#parseAln_mapq: "20"    
-#parseAln_diff: "20" 
+#parseAln_mapq: "default"    
+#parseAln_diff: "default" 
+parseAln_mapq: "20"    
+parseAln_diff: "20" 
 
 bam_sort_buff: "8G"
 IGV_genome: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9.chrom.sizes"  #"reference_genome"
@@ -33,8 +33,9 @@ IGV_genome: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9.chrom.sizes"  #
 
 ## diffRepeats: repbase database
 repbase_db: "/sc/orga/work/lohy01/Databases/RepBase/repbase_mouseNancest.fa"
-## diffRepeats: edit distance for bwa aligner used
-diffrepeat_editdist: "0.04"
+## diffRepeats: mapq and edit distance for bwa aligner used
+diffrepeat_mapq: "20"
+diffrepeat_editdist: "10"
 
 ## set whether or not to run phantomPeak
 ## "yes" or "no"
@@ -49,11 +50,11 @@ input_files: "*.fastq"
 cores: 4  # number of cores to use for multi-threaded programs.
 queue: "alloc"  # scavenger is free. Use alloc or expressalloc for paid queues.
 m: "manda"  # by default, the cluster will choose a partition to run your job.
-alloc: "acc_shenl03c"  # use "acc_shenl03a" to use allocations.
+alloc: "acc_shenl03_chip"  # use "acc_shenl03a" to use allocations.
 
 ## wall_time for every step, hh:mm
 wall_time:
-    alignFastqByBowtie: "0:30"
+    alignFastqByBowtie: "2:00"
     runFastqc: "0:30"
     rmdupBam: "0:30"
     genTDF: "0:30"
