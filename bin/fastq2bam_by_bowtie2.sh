@@ -52,22 +52,25 @@ else
 fi
 
 if [[ "$PE" == "no" ]]; then
-   parseAln.pl ${SAM} $MAPQ $DIFF
-
-   samtools merge ${SAM/sam/unNmultimapped.bam} ${SAM/sam/unmapped.bam} ${SAM/sam/multimapped.bam}
-   bamToFastq -i ${SAM/sam/unNmultimapped.bam} -fq ${SAM/sam/unNmultimapped.fastq}
-   
-   mv ${SAM/sam/unmapped.bam} $TARGET
-   mv ${SAM/sam/multimapped.bam} $TARGET
-   mv ${SAM/sam/uniqmapped.bam} $TARGET
-   mv ${SAM/sam/unmapped.bam.bai} $TARGET
-   mv ${SAM/sam/multimapped.bam.bai} $TARGET
-   mv ${SAM/sam/uniqmapped.bam.bai} $TARGET
-   mv ${SAM/sam/unNmultimapped.fastq} $TARGET
-
-   rm ${SAM/sam/unNmultimapped.bam} 
+   parseAln_SE.pl ${SAM} $MAPQ $DIFF
+elif [[ "$PE" == "yes" ]]; then
+   parseAln_PE.pl ${SAM} $MAPQ $DIFF
 fi
-#todo: implement similar steps for paired end
+
+samtools merge ${SAM/sam/unNmultimapped.bam} ${SAM/sam/unmapped.bam} ${SAM/sam/multimapped.bam}
+bamToFastq -i ${SAM/sam/unNmultimapped.bam} -fq ${SAM/sam/unNmultimapped.fastq}
+   
+mv ${SAM/sam/unmapped.bam} $TARGET
+mv ${SAM/sam/multimapped.bam} $TARGET
+mv ${SAM/sam/uniqmapped.bam} $TARGET
+mv ${SAM/sam/unmapped.bam.bai} $TARGET
+mv ${SAM/sam/multimapped.bam.bai} $TARGET
+mv ${SAM/sam/uniqmapped.bam.bai} $TARGET
+mv ${SAM/sam/unNmultimapped.fastq} $TARGET
+
+rm ${SAM/sam/unNmultimapped.bam} 
+
+#fi
 
 samtools view -Sb ${SAM} > ${SAM/sam/nonSorted.bam}
 samtools sort -m 5G ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
