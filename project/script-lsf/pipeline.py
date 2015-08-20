@@ -71,9 +71,6 @@ log_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], 
 
 script_path = os.path.dirname(os.path.realpath(__file__))
 
-#@follows(mkdir(alignment_path), mkdir(log_path), mkdir(fastqc_path), mkdir(rmdup_path), mkdir(tdf_path), mkdir(phantompeak_path), mkdir(diffrepeat_path))
-#@originate(FqFiles)
-#@transform(FqFiles, formatter(fq_ext), os.path.join(log_path, "mkdir.log"), config)
 @merge(FqFiles, expandOsPath(os.path.join(log_path,"mkdir.log")), config)
 def makeDir(input_files,output_file,config):
     """
@@ -94,12 +91,10 @@ def makeDir(input_files,output_file,config):
         job_name = "mkdir",
         job_other_options = cluster_options(config, "initiateFiles", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-        #job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-        job_environment={ 'BASH_ENV' : '' },
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
     return 0
 
-#@transform(initiateFiles, formatter(fq_ext), os.path.join(alignment_path, "{basename[0]}.uniqmapped.bam"), config)
 @follows(makeDir)
 @transform(FqFiles, formatter(fq_ext), os.path.join(alignment_path, "{basename[0]}.uniqmapped.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
@@ -139,12 +134,10 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
         job_other_options = cluster_options(config, "alignFastqByBowtie", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-        #job_environment={ 'BASH_ENV' : '' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
 
-#@transform(initiateFiles, formatter(fq_ext), os.path.join(log_path, "{basename[0]}.bam.fastqc.log"), config)
 @follows(makeDir)
 @transform(FqFiles, formatter(fq_ext), os.path.join(log_path, "{basename[0]}.fastq.fastqc.log"), config)
 def runFastqc(FqFileName, fastqcLog, config):
@@ -173,7 +166,6 @@ def runFastqc(FqFileName, fastqcLog, config):
         job_other_options = cluster_options(config, "runFastqc", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
         job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-        #job_environment={ 'BASH_ENV' : '' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
@@ -202,8 +194,7 @@ def rmdupBam(BamFileName, rmdupFile, config):
         job_name = os.path.basename(BamFileName) + "_rmdup",
         job_other_options = cluster_options(config, "rmdupBam", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-        #job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-        job_environment={ 'BASH_ENV' : '' },
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
@@ -230,8 +221,7 @@ def genTDF(BamFileName, tdfLog, config):
         job_name = os.path.basename(BamFileName) + "_genTDF",
         job_other_options = cluster_options(config, "genTDF", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-        #job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-        job_environment={ 'BASH_ENV' : '' },
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
@@ -258,8 +248,7 @@ def runPhantomPeak(BamFileName, PPLog, config):
         job_name = os.path.basename(BamFileName) + "_runPhantomPeak",
         job_other_options = cluster_options(config, "runPhantomPeak", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-        #job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-        job_environment={ 'BASH_ENV' : '' },
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
@@ -289,8 +278,7 @@ def runDiffrepeat(BamFileNames, ResultFile, config):
         job_name = "runDiffRepeat",
         job_other_options = cluster_options(config, "runDiffrepeat", cores, logfile),
         job_script_directory = os.path.dirname(os.path.realpath(__file__)),
-        #job_environment={ 'BASH_ENV' : '~/.bash_profile' },
-        job_environment={ 'BASH_ENV' : '' },
+        job_environment={ 'BASH_ENV' : '~/.bash_profile' },
         retain_job_scripts = True, drmaa_session=my_drmaa_session)
 
     return 0
