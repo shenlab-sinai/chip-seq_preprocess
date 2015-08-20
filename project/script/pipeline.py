@@ -35,11 +35,40 @@ inputfiles = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]
 FqFiles = [x for x in glob.glob(inputfiles)]
 fq_name, fq_ext = os.path.splitext(config["input_files"])
 fq_ext_suffix = ".alignment.log"
-Bam_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"])) + "/"
-FastQC_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))
-rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "rmdup"))
+alignment_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"],"Alignment"))
+fastqc_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC"))
+rmdup_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "Alignment", "rmdup"))
+tdf_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "Alignment", "rmdup", "tdf"))
+phantompeak_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "PhantomPeak"))
+diffrepeat_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "DiffRepeat"))
+log_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "Log"))
+ngsplot_path = expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "NgsPlot"))
 
-@transform(FqFiles, formatter(fq_ext), os.path.join(Bam_path, "{basename[0]}.bam"), config)
+@merge(FqFiles, expandOsPath(os.path.join(log_path,"mkdir.log")), config)
+def makeDir(input_files,output_file,config):
+    """
+    make directories
+    """
+    cmds = ['mkdir']
+    cmds.append(log_path)
+    cmds.append(fastqc_path)
+    cmds.append(alignment_path)
+    cmds.append(rmdup_path)
+    cmds.append(tdf_path)
+    cmds.append(phantompeak_path)
+    cmds.append(diffrepeat_path)
+    cmds.append(ngsplot_path)
+    cores = 1
+    logfile = expandOsPath(os.path.join(config["project_dir"], config["data_dir"])) + "/" + "mkdir.log"
+
+    p = subprocess.Popen(
+        cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
+        bufsize=1)
+    stdout, stderr = p.communicate()
+    return stdout
+
+@follows(makeDir)
+@transform(FqFiles, formatter(fq_ext), os.path.join(alignment_path, "{basename[0]}.uniqmapped.bam"), config)
 def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
     """
     To align '.fastq' to genome.
@@ -55,6 +84,8 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
             cmds = ['fastq2bam_by_bowtie2.sh']
             cmds.append(FqFileName)
             cmds.append(config['bowtie_index'])
+            cmds.append(config['parseAln_mapq'])
+            cmds.append(config['parseAln_diff'])
         else:
             raise KeyError
     else:
@@ -62,47 +93,49 @@ def alignFastqByBowtie(FqFileName, OutputBamFileName, config):
         cmds.append(FqFileName)
         cmds.append(expandOsPath(config['bowtie_index']))
 
-    target = expandOsPath(os.path.join(config["project_dir"], config["data_dir"]))
-    cmds.append(target)
+    cmds.append(alignment_path)
     cmds.append(config["pair_end"])
-    cores = int(int(config['cores'])/len(FqFiles))
+    cores = int(config['cores'])
     if cores == 0:
         cores = 1
     cmds.append(str(cores))
-    logfile = FqFileName + ".alignment.log"
+    logfile = log_path + "/" +  os.path.basename(FqFileName) + ".alignment.log"
+
     p = subprocess.Popen(
         cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
         bufsize=1)
     stdout, stderr = p.communicate()
     return stdout
 
-@follows(alignFastqByBowtie, mkdir(FastQC_path))
-@transform(alignFastqByBowtie, suffix(".bam"), ".bam.fastqc.log", config)
-def runFastqc(BamFileName, fastqcLog, config):
+@follows(makeDir)
+@transform(FqFiles, formatter(fq_ext), os.path.join(log_path, "{basename[0]}.fastq.fastqc.log"), config)
+def runFastqc(FqFileName, fastqcLog, config):
     """
     To run FastQC
     Arguments:
-    - `BamFileName`: bam file
+    - `FqFileName`: fastq file
     - `config`: config
     """
-    cmds = ['fastqc']
-    cmds.append("-o")
-    cmds.append(expandOsPath(os.path.join(config["project_dir"], config["data_dir"], "FastQC")))
-    if "fastqc_threads" in config:
-        cmds.append("-t")
-        cmds.append(str(config["fastqc_threads"]))
-    else:
-        cmds.append("-t")
-        cmds.append("2")
-    cmds.append(BamFileName)
-    logfile = BamFileName + ".fastqc.log"
+    cmds = ['runFastQC.sh']
+    #cmds.append("-o")
+    cmds.append(fastqc_path)
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
+    #cmds.append("-t")
+    cmds.append(str(cores))
+    cmds.append(FqFileName)
+
+    cmds.append(config["pair_end"])
+
+    logfile = fastqcLog
+
     p = subprocess.Popen(
         cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
         bufsize=1)
     stdout, stderr = p.communicate()
     return stdout
 
-@follows(runFastqc, mkdir(rmdup_path))
 @transform(alignFastqByBowtie, formatter(".bam"), os.path.join(rmdup_path, "{basename[0]}_rmdup.bam"), config)
 def rmdupBam(BamFileName, rmdupFile, config):
     """
@@ -119,15 +152,17 @@ def rmdupBam(BamFileName, rmdupFile, config):
     cmds.append(rmdup_path)
     #if "bam_sort_buff" in config:
     #    cmds.append(config["bam_sort_buff"])
-    logfile = BamFileName + ".rmdup.log"
+    logfile = log_path + "/" +  os.path.basename(BamFileName) + ".rmdup.log"
+
+    cores = 1
+
     p = subprocess.Popen(
         cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
         bufsize=1)
     stdout, stderr = p.communicate()
     return stdout
 
-@follows(rmdupBam, mkdir(expandOsPath(os.path.join(rmdup_path, "tdf"))))
-@transform(rmdupBam, suffix(".bam"), ".bam.tdf.log", config)
+@transform(rmdupBam, formatter(".bam"), os.path.join(log_path, "{basename[0]}.bam.tdf.log"), config)
 def genTDF(BamFileName, tdfLog, config):
     """
     To generate TDF files for IGV
@@ -138,20 +173,21 @@ def genTDF(BamFileName, tdfLog, config):
     cmds = ['igvtools']
     cmds.append("count")
     cmds.append(BamFileName)
-    TDFPath = expandOsPath(os.path.join(rmdup_path, "tdf"))
     baseName = os.path.basename(BamFileName)
-    cmds.append(os.path.join(TDFPath, baseName.replace(".bam", ".tdf")))
+    cmds.append(os.path.join(tdf_path, baseName.replace(".bam", ".tdf")))
     cmds.append(config["IGV_genome"])
-    logfile = BamFileName + ".tdf.log"
+    logfile = tdfLog
+
+    cores = 1
+
     p = subprocess.Popen(
         cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
         bufsize=1)
     stdout, stderr = p.communicate()
     return stdout
 
-@follows(rmdupBam)
-@transform(rmdupBam, suffix(".bam"), ".bam.phantomPeak.log", config)
-def runPhantomPeak(BamFileName, Log, config):
+@transform(rmdupBam, formatter(".bam"), os.path.join(log_path, "{basename[0]}.bam.phantomPeak.log"), config)
+def runPhantomPeak(BamFileName, PPLog, config):
     """
     To check data with phantomPeak
     Arguments:
@@ -160,15 +196,48 @@ def runPhantomPeak(BamFileName, Log, config):
     """
     cmds = ['runPhantomPeak.sh']
     cmds.append(BamFileName)
-    logfile = BamFileName + ".phantomPeak.log"
+    cmds.append(str(config["cores"]))
+    cmds.append(phantompeak_path)
+    logfile = PPLog
+
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
+
     p = subprocess.Popen(
         cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
         bufsize=1)
     stdout, stderr = p.communicate()
     return stdout
 
-@follows(runPhantomPeak, genTDF)
-@merge(rmdupBam, expandOsPath(os.path.join(rmdup_path, config["project_name"]+".ngsplot.all.log")), config)
+@merge(alignFastqByBowtie, expandOsPath(os.path.join(diffrepeat_path, config["project_name"]+".diffrepeat.resulttable")), config)
+def runDiffrepeat(BamFileNames, ResultFile, config):
+    """
+    To run diffrepeats
+    Arguments:
+    - `BamFileNames`: bam files
+    - `config`: config
+    """
+    cmds = ['runDiffrepeat.sh']
+    cmds.append(diffrepeat_path)
+    cmds.append(alignment_path)
+    cmds.append(config["repbase_db"])
+    cmds.append(ResultFile)
+    cmds.append(config["diffrepeat_editdist"])
+    cmds.append(config["diffrepeat_mapq"])
+    logfile = expandOsPath(os.path.join(log_path, config["project_name"]+".diffrepeat.log"))
+
+    cores = int(config['cores'])
+    if cores == 0:
+        cores = 1
+
+    p = subprocess.Popen(
+        cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
+        bufsize=1)
+    stdout, stderr = p.communicate()
+    return stdout
+
+@merge(rmdupBam, expandOsPath(os.path.join(ngsplot_path, config["project_name"]+".ngsplot.all.log")), config)
 def runNgsplotAll(BamFileNames, Log, config):
     """
     To check data with phantomPeak
@@ -182,18 +251,30 @@ def runNgsplotAll(BamFileNames, Log, config):
     cmds.append(config["project_name"])
     cmds.append(str(config["cores"]))
     cmds.append(str(config["ngsplot_fraglen"]))
-    logfile = expandOsPath(os.path.join(rmdup_path, config["project_name"]+".ngsplot.all.log"))
+    logfile1 = expandOsPath(os.path.join(log_path, config["project_name"]+".ngsplot.all.log1"))
+    logfile2 = expandOsPath(os.path.join(log_path, config["project_name"]+".ngsplot.all.log2"))
     p = subprocess.Popen(
-        cmds, stdout=open(logfile, "w"), stderr=open(logfile, "w"),
+        cmds, stdout=open(logfile1, "w"), stderr=open(logfile2, "w"),
         bufsize=1)
     stdout, stderr = p.communicate()
     return stdout
 
-## Run to FastQC step
-# pipeline_run([runFastqc], multiprocess=config["cores"])
+if config["run_phantompeak"]=="yes":
+    @follows(runFastqc, genTDF, runPhantomPeak, runNgsplotAll, runDiffrepeat)
+    def complete():
+        """
+        dummy step to consolidate pipeline
+        """
+        return 0
+else:
+    @follows(runFastqc, genTDF, runNgsplotAll, runDiffrepeat)
+    def complete():
+        """
+        dummy step to consolidate pipeline
+        """
+        return 0
 
-## Run the whole pipeline
-pipeline_run([runNgsplotAll], multiprocess=config["cores"])
+## Run pipeline
+pipeline_printout_graph("all_flowchart.png", "png", [complete], pipeline_name="Preprocessing of ChIP-seq")
+pipeline_run([complete], multiprocess=config["cores"])
 
-## Plot the pipeline flowchart
-# pipeline_printout_graph("all_flowchart.png", "png", [runNgsplotAll], pipeline_name="Preprocessing of ChIP-seq")

@@ -33,6 +33,7 @@ else
 	ngs.plot.r -G ${2} -C config.cov.norm.txt -R tes -O ${3}_norm_tes_${5} -FL ${5} -P ${4}
 fi
 
+if [ -f config.cov.txt ]; then rm config.cov.txt; fi
 cd ${CWD}
 exit 0
 
