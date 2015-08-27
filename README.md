@@ -9,6 +9,7 @@ Here is the current pipeline used for ChIP-seq preprocessing, which includes the
 * remove all reads duplications of the aligned data.
 * generate TDF files for browsing in IGV.
 * run PhantomPeak to check the quality of ChIP.
+* run diffRepeats on multi- and un-mapped reads.
 * run ngs.plot to investigate the enrichment of ChIP-seq data at TSS, TES, and genebody (only implemented in local version, not lsf cluster computing).
  
 The pipeline work flow is:
