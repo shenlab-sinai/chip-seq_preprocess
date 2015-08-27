@@ -76,7 +76,7 @@ def makeDir(input_files,output_file,config):
     """
     make directories
     """
-    cmds = ['mkdir']
+    cmds = ['makedir.pl']
     cmds.append(log_path)
     cmds.append(fastqc_path)
     cmds.append(alignment_path)
