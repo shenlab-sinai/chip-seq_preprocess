@@ -73,7 +73,7 @@ rm ${SAM/sam/unNmultimapped.bam}
 #fi
 
 samtools view -Sb ${SAM} > ${SAM/sam/nonSorted.bam}
-samtools sort -m 5G ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
+samtools sort ${SAM/sam/nonSorted.bam} ${FQDIR}/${FILENAME_BASE}
 samtools index ${SAM/sam/bam}
 rm ${SAM} ${SAM/sam/nonSorted.bam}
 mv ${SAM/sam/bam}* $TARGET

@@ -153,7 +153,7 @@ print STDERR "Done!\n\n";
 print STDERR "Sorting bam...";
 my @tosortfiles=($bamfile,$unmappedbam,$uniqmappedbam,$multimappedbam);
 foreach my $file (@tosortfiles) {
-   system("samtools sort -m 5G $file $file.sorted"); 
+   system("samtools sort $file $file.sorted"); 
    system("mv $file.sorted.bam $file");
    system("samtools index $file");
 }
