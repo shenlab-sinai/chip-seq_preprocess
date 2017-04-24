@@ -56,6 +56,7 @@ def parse_bowtie2_log(s):
                         re.VERBOSE)
     multiple_mapped_pattern = re.compile("""\s+(?P<multiple_mapped_reads>\d+)\s+\(\S+\).+aligned\s+>1\s+times""", # unique_mapped_reads
                         re.VERBOSE)
+    combined_pattern = re.compile("""(\d+)\slines\.+\s(\d+)\sheaders\,\s(\d+)\sunique\,\s(\d+)\smulti\,\s(\d+)\sunmapped\.""")
     for line in s:
         match = total_pattern.match(line)
         if match:
@@ -66,6 +67,11 @@ def parse_bowtie2_log(s):
         match = multiple_mapped_pattern.match(line)
         if match:
             multiple_mapped_reads = match.group("multiple_mapped_reads")
+        match = combined_pattern.match(line)
+        if match:
+            total_reads = str(int(match.group(1)) - int(match.group(2)))
+            unique_mapped_reads = match.group(3)
+            multiple_mapped_reads = match.group(4)
     res = namedtuple('res', ['total_reads', 'unique_mapped_reads', 'multiple_mapped_reads'])
     r = res(total_reads=total_reads, 
         unique_mapped_reads=unique_mapped_reads, 
@@ -83,17 +89,25 @@ def parse_rmdup_log(s):
     return r
 
 def parse_phantomPeak_log(s):
-    NSC_pattern = re.compile(r'.*\(NSC\)\s*(?P<NSC>\d*\.\d*).+', re.VERBOSE)
-    RSC_pattern = re.compile(r'.*\(RSC\)\s*(?P<RSC>\d*\.\d*).+', re.VERBOSE)
+    NSC_pattern = re.compile(r'.*\(NSC\)\s*(?P<NSC>[+-]*\d*\.\d*).+', re.VERBOSE)
+    RSC_pattern = re.compile(r'.*\(RSC\)\s*(?P<RSC>[+-]*\d*\.\d*).+', re.VERBOSE)
     for line in s:
         match = NSC_pattern.match(line)
         if match:
+            print "nscMatch" #eddamend
             NSC = match.group("NSC")
         match = RSC_pattern.match(line)
         if match:
+            print "rscMatch" #eddamend
             RSC = match.group("RSC")
     res = namedtuple('res', ['NSC', 'RSC'])
+    print "nsc:" #eddamend
+    print NSC #eddamend
+    print "rsc:" #eddamend
+    print RSC #eddamend
     r = res(NSC=NSC, RSC=RSC)
+    print "r:" #eddamend
+    print r #eddamend
     return r
 
 def getSummaryFiles(input_type, config, search_paths):
@@ -113,13 +127,15 @@ def getFileId(file_basename):
     """
     Remove suffix of the summary file to get file id.
     """
+    suffixes = ['.fastq.alignment.log', '.fq.alignment.log', '.gz.alignment.log', '.bam.rmdup.log']
     suffixes = ['.fastq.alignment.log', '.fq.alignment.log', '.gz.alignment.log', '.bam.rmdup.log', '_rmdup.bam.phantomPeak.log']
     for suffix in suffixes:
         file_basename = file_basename.replace(suffix, '')
     return file_basename
 
 ## Search subdirectories under data folder.
-search_paths = ["fastq", "rmdup"]
+#search_paths = ["fastq", "rmdup"]
+search_paths = ["Log"]
 
 ## Used for final results.
 summary_dict = {}
@@ -192,6 +208,7 @@ for input_type, summary_types in input_files.items():
     if len(summary_files) != 0:
         for summary_file in summary_files:
             file_id = getFileId(os.path.basename(summary_file))
+            file_id = re.sub(r'.uniqmapped', r'', file_id)
             if file_id not in summary_dict:
                 summary_dict[file_id] = {'sample':file_id}
             input_file = file(summary_file)
@@ -206,7 +223,8 @@ for input_type, summary_types in input_files.items():
                 summary_dict[file_id][res._fields[i]] = res[i]
 
 ## Output to file, and the columns order is decided by output_header.
-output_file = file("summary_stats.txt", "w")
+
+output_file = file(config["project_name"]+"_summary_stats.txt", "w")
 header_line = "\t".join(output_header) + "\n"
 output_file.write(header_line)
 for sample in summary_dict.keys():

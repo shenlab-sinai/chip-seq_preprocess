@@ -1,43 +1,61 @@
-project_name: "test_ChIP-seq"
-project_dir: "~/projects/test_ChIP-seq"
+## Project and Directory Settings
+project_name: "Test-ChIP-seq"
+#project_dir: "/sc/orga/projects/shenl03c/Eddie/ChIPseq_Projects/Test"
+project_dir: "/sc/orga/scratch/lohy01/ChipPipelineTest/"
+data_dir: "Data" # the folder under project folder, containing fastq folder.
 
-## Aligner: bowtie or bowtie2
-aligner: "bowtie"
-pair_end: "no"
-
-## If use bowtie, then bowtie1 index path to be assigned here.
-## "Genome" replaced by genome name as "hg19" or "mm9", and
-## uncomment next line.
-bowtie_index: "~/data/bowtie_index/Genome"
-
-## If use bowtie2, then "Genome" should be replace by
-## bowtie2 index name, as "hg19" or "mm9"
-## $BOWTIE2_INDEXES should be added in the environment variables
-# bowtie_index: "Genome"
-
-bam_sort_buff: "8G"
-IGV_genome: "reference_genome"
-# ngsplot_genome: "reference_genome"
-# ngsplot_fraglen: 150
-
-## the folder under project folder, containing fastq folder.
-data_dir: "data"
-
+## Input Files
 ## match pattern for input files. Now it could be:
 ## *.fastq, *.fq, *.gz
 ## for pair end data, use "*R1*.fastq.gz" or "*R1*.fastq"
 input_files: "*.fastq"
+pair_end: "no"
+#pair_end: "yes"
+
+## Aligner
+## only bowtie2 supported currently
+aligner: "bowtie2" 
+bowtie_index: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9"
+
+## Alignment Parsing
+## Settings to determine which alignments are 'unique' and which are 'multi'. All alignments greater than parseAln_mapq AND greater than parseAln_diff (bowtie2 AS-XS score) will be determined as unique. Set to "default" for both if using the native Bowtie2 determination of unique and multi.
+#parseAln_mapq: "default"    
+parseAln_mapq: "20"    
+#parseAln_diff: "default" 
+parseAln_diff: "20" 
+
+## Samtools sorting memory setting
+bam_sort_buff: "8G"
+
+## TDF
+## chromosome sizes file required for igvtools processing of tdf files
+IGV_genome: "/sc/orga/work/lohy01/Databases/Bowtie2Index/MM9/mm9.chrom.sizes"
+
+## diffRepeats
+## repbase fasta database file
+repbase_db: "/sc/orga/work/lohy01/Databases/RepBase/repbase_mouseNancest.fa"
+diffrepeat_mapq: "20" # mapq cutoff for bwa aligner used in diffRepeats
+diffrepeat_editdist: "10" # edit distance for bwa aligner used in diffRepeats
+
+## phantomPeak
+run_phantompeak: "yes" # set whether or not to run phantomPeak. "yes" or "no"
+
+## ngsPlot
+# ngsplot_genome: "reference_genome"
+# ngsplot_fraglen: 150
 
 ## cluster settings
-cores: 8  # number of cores to use for multi-threaded programs.
-queue: "scavenger"  # scavenger is free. Use alloc or expressalloc for paid queues.
-# m: "partition_to_run"  # by default, the cluster will choose a partition to run your job.
-# alloc: "scavenger"  # use "acc_shenl03a" to use allocations.
+cores: 4  # number of cores to use for multi-threaded programs.
+queue: "alloc"  # scavenger is free. Use alloc or expressalloc for paid queues.
+m: "manda"  # by default, the cluster will choose a partition to run your job.
+alloc: "acc_shenl03_chip"  # use "acc_shenl03a" to use allocations.
 
 ## wall_time for every step, hh:mm
 wall_time:
-    alignFastqByBowtie: "23:59"
-    runFastqc: "4:00"
-    rmdupBam: "20:00"
-    genTDF: "20:00"
-    runPhantomPeak: "20:00"
+    initiateFiles: "0:10"
+    alignFastqByBowtie: "1:00"
+    runFastqc: "0:30"
+    rmdupBam: "0:30"
+    genTDF: "0:30"
+    runPhantomPeak: "0:30"
+    runDiffrepeat: "0:30"
